@@ -19,6 +19,10 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
         {
             await WriteProblemAsync(context, StatusCodes.Status400BadRequest, ex.Message);
         }
+        catch (InvalidPatchDeltaException ex)
+        {
+            await WriteProblemAsync(context, StatusCodes.Status400BadRequest, ex.Message);
+        }
         catch (VersionMismatchException ex)
         {
             await WriteProblemAsync(context, StatusCodes.Status409Conflict, ex.Message);

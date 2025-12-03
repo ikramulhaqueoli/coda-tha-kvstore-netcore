@@ -60,6 +60,13 @@ public sealed class KeyValueCommandHandlerTests : IDisposable
             _putHandler.Handle(new PutKeyValueCommand("user3", JsonValue.Create(2), 99), CancellationToken.None));
     }
 
+    [Fact]
+    public async Task Patch_With_Null_Delta_Throws()
+    {
+        await Assert.ThrowsAsync<InvalidPatchDeltaException>(() =>
+            _patchHandler.Handle(new PatchKeyValueCommand("user4", null, null), CancellationToken.None));
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("   ")]

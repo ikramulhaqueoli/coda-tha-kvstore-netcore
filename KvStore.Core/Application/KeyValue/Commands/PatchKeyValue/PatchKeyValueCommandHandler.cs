@@ -3,7 +3,6 @@ using KvStore.Core.Application.KeyValue.Responses;
 using KvStore.Core.Domain.Entities;
 using KvStore.Core.Domain.Exceptions;
 using KvStore.Core.Domain.Repositories;
-using KvStore.Core.Domain.Validation;
 
 namespace KvStore.Core.Application.KeyValue.Commands.PatchKeyValue;
 
@@ -13,8 +12,7 @@ public sealed class PatchKeyValueCommandHandler(
 {
     public Task<KeyValueResponse> Handle(PatchKeyValueCommand command, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(command);
-        KeyValidator.EnsureValid(command.Key);
+        PatchKeyValueCommandValidator.Validate(command);
 
         return keyLockProvider.ExecuteWithLockAsync(command.Key, async token =>
         {
