@@ -13,12 +13,24 @@ public sealed class KeyValueCommandValidatorTests
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
-    [InlineData("user:bad")]
-    [InlineData("bad-key")]
+    [InlineData("bad key")]
+    [InlineData("bad*key")]
     public void Put_Command_Invalid_Key_Fails(string key)
     {
         Assert.Throws<InvalidKeyException>(() =>
             _putValidator.Validate(new PutKeyValueCommand(key, JsonValue.Create(1), null)));
+    }
+
+    [Theory]
+    [InlineData("user:good")]
+    [InlineData("user-good")]
+    [InlineData("user_good")]
+    [InlineData("user=good")]
+    public void Put_Command_Allows_Configured_Symbols(string key)
+    {
+        var exception = Record.Exception(() =>
+            _putValidator.Validate(new PutKeyValueCommand(key, JsonValue.Create(1), null)));
+        Assert.Null(exception);
     }
 
     [Fact]

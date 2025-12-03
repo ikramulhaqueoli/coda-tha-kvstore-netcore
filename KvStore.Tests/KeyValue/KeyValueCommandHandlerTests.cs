@@ -78,11 +78,10 @@ public sealed class KeyValueCommandHandlerTests : IDisposable
     }
 
     [Fact]
-    public async Task Get_Returns_Default_When_Missing()
+    public async Task Get_Missing_Key_Throws()
     {
-        var snapshot = await _getHandler.Handle(new GetKeyValueQuery("missingKey"), CancellationToken.None);
-        Assert.Equal(0, snapshot.Version);
-        Assert.Null(snapshot.Value);
+        await Assert.ThrowsAsync<KeyValueNotFoundException>(() =>
+            _getHandler.Handle(new GetKeyValueQuery("missingKey"), CancellationToken.None));
     }
 
     [Fact]

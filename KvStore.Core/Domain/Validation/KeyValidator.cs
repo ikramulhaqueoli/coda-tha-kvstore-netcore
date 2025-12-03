@@ -13,7 +13,10 @@ public static class KeyValidator
 
         foreach (var c in key)
         {
-            if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
+            if ((c >= '0' && c <= '9') ||
+                (c >= 'A' && c <= 'Z') ||
+                (c >= 'a' && c <= 'z') ||
+                c is ':' or '-' or '_' or '=')
             {
                 continue;
             }
