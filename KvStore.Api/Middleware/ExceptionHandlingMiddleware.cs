@@ -27,10 +27,6 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
         {
             await WriteProblemAsync(context, StatusCodes.Status409Conflict, ex.Message);
         }
-        catch (KeyValueNotFoundException ex)
-        {
-            await WriteProblemAsync(context, StatusCodes.Status404NotFound, ex.Message);
-        }
         catch (JsonException)
         {
             await WriteProblemAsync(context, StatusCodes.Status400BadRequest, "The request body was not valid JSON.");

@@ -16,7 +16,6 @@ public sealed class KeyValueController(
 {
     [HttpGet("{key}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<KeyValueResponse>> GetAsync(string key, CancellationToken cancellationToken)
     {
         var response = await queryDispatcher.DispatchAsync(new GetKeyValueQuery(key), cancellationToken);

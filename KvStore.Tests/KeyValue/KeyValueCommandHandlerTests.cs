@@ -61,6 +61,31 @@ public sealed class KeyValueCommandHandlerTests : IDisposable
     }
 
     [Fact]
+    public async Task Put_With_Expected_Version_Zero_Creates_New_Value()
+    {
+        var response = await _putHandler.Handle(new PutKeyValueCommand("user5", JsonValue.Create(10), 0), CancellationToken.None);
+        Assert.Equal(1, response.Version);
+        Assert.Equal(10, response.Value?.GetValue<int>());
+    }
+
+    [Fact]
+    public async Task Patch_With_Expected_Version_Zero_Creates_New_Value()
+    {
+        var delta = JsonNode.Parse("""{"points":5}""");
+        var response = await _patchHandler.Handle(new PatchKeyValueCommand("user6", delta, 0), CancellationToken.None);
+        Assert.Equal(1, response.Version);
+        Assert.Equal(5, response.Value?["points"]?.GetValue<int>());
+    }
+
+    [Fact]
+    public async Task Get_Returns_Default_When_Missing()
+    {
+        var snapshot = await _getHandler.Handle(new GetKeyValueQuery("missingKey"), CancellationToken.None);
+        Assert.Equal(0, snapshot.Version);
+        Assert.Null(snapshot.Value);
+    }
+
+    [Fact]
     public async Task Concurrent_Clients_Increment_Without_Lost_Updates()
     {
         const string key = "counter1";

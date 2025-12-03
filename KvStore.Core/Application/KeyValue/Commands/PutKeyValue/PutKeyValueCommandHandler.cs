@@ -18,9 +18,9 @@ public sealed class PutKeyValueCommandHandler(
 
             if (aggregate is null)
             {
-                if (command.ExpectedVersion.HasValue)
+                if (command.ExpectedVersion.HasValue && command.ExpectedVersion.Value != 0)
                 {
-                    throw new VersionMismatchException(command.Key, command.ExpectedVersion.Value, null);
+                    throw new VersionMismatchException(command.Key, command.ExpectedVersion.Value, 0);
                 }
 
                 aggregate = KeyValueAggregate.Create(command.Key, command.Value);

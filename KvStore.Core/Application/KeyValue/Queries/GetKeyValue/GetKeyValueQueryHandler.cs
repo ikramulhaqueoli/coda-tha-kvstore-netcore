@@ -1,6 +1,5 @@
 using KvStore.Core.Application.Abstractions;
 using KvStore.Core.Application.KeyValue.Responses;
-using KvStore.Core.Domain.Exceptions;
 using KvStore.Core.Domain.Repositories;
 using KvStore.Core.Domain.Validation;
 
@@ -21,7 +20,7 @@ public sealed class GetKeyValueQueryHandler(
 
             if (aggregate is null)
             {
-                throw new KeyValueNotFoundException(query.Key);
+                return new KeyValueResponse(query.Key, null, 0);
             }
 
             return KeyValueResponse.FromSnapshot(aggregate.ToSnapshot());
