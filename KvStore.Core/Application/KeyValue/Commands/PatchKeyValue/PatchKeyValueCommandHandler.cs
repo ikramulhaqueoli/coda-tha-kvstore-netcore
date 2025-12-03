@@ -12,8 +12,6 @@ public sealed class PatchKeyValueCommandHandler(
 {
     public Task<KeyValueResponse> Handle(PatchKeyValueCommand command, CancellationToken cancellationToken)
     {
-        PatchKeyValueCommandValidator.Validate(command);
-
         return keyLockProvider.ExecuteWithLockAsync(command.Key, async token =>
         {
             var aggregate = await repository.GetAsync(command.Key, token);

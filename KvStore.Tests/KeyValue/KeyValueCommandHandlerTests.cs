@@ -61,24 +61,6 @@ public sealed class KeyValueCommandHandlerTests : IDisposable
     }
 
     [Fact]
-    public async Task Patch_With_Null_Delta_Throws()
-    {
-        await Assert.ThrowsAsync<InvalidPatchDeltaException>(() =>
-            _patchHandler.Handle(new PatchKeyValueCommand("user4", null, null), CancellationToken.None));
-    }
-
-    [Theory]
-    [InlineData("")]
-    [InlineData("   ")]
-    [InlineData("user:bad")]
-    [InlineData("bad-key")]
-    public async Task Invalid_Key_Fails(string key)
-    {
-        await Assert.ThrowsAsync<InvalidKeyException>(() =>
-            _putHandler.Handle(new PutKeyValueCommand(key, JsonValue.Create(1), null), CancellationToken.None));
-    }
-
-    [Fact]
     public async Task Concurrent_Clients_Increment_Without_Lost_Updates()
     {
         const string key = "counter1";

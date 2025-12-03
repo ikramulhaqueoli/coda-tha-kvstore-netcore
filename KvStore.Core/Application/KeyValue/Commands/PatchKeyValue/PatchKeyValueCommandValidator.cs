@@ -1,11 +1,12 @@
+using KvStore.Core.Application.Abstractions;
 using KvStore.Core.Domain.Exceptions;
 using KvStore.Core.Domain.Validation;
 
 namespace KvStore.Core.Application.KeyValue.Commands.PatchKeyValue;
 
-public static class PatchKeyValueCommandValidator
+public sealed class PatchKeyValueCommandValidator : ICommandValidator<PatchKeyValueCommand>
 {
-    public static void Validate(PatchKeyValueCommand command)
+    public void Validate(PatchKeyValueCommand command)
     {
         ArgumentNullException.ThrowIfNull(command);
         KeyValidator.EnsureValid(command.Key);

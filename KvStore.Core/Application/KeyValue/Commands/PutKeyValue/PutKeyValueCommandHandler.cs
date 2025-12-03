@@ -12,8 +12,6 @@ public sealed class PutKeyValueCommandHandler(
 {
     public Task<KeyValueResponse> Handle(PutKeyValueCommand command, CancellationToken cancellationToken)
     {
-        PutKeyValueCommandValidator.Validate(command);
-
         return keyLockProvider.ExecuteWithLockAsync(command.Key, async token =>
         {
             var aggregate = await repository.GetAsync(command.Key, token);

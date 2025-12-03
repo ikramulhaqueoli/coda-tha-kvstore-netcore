@@ -22,6 +22,8 @@ builder.Services.AddScoped<IQueryDispatcher, QueryDispatcher>();
 builder.Services.AddScoped<ICommandHandler<PutKeyValueCommand, KeyValueResponse>, PutKeyValueCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<PatchKeyValueCommand, KeyValueResponse>, PatchKeyValueCommandHandler>();
 builder.Services.AddScoped<IQueryHandler<GetKeyValueQuery, KeyValueResponse>, GetKeyValueQueryHandler>();
+builder.Services.AddScoped<ICommandValidator<PutKeyValueCommand>, PutKeyValueCommandValidator>();
+builder.Services.AddScoped<ICommandValidator<PatchKeyValueCommand>, PatchKeyValueCommandValidator>();
 
 builder.Services.AddKvStoreInfrastructure();
 
