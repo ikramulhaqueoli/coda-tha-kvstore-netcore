@@ -3,6 +3,7 @@ using KvStore.Core.Application.KeyValue.Responses;
 using KvStore.Core.Domain.Entities;
 using KvStore.Core.Domain.Exceptions;
 using KvStore.Core.Domain.Repositories;
+using KvStore.Core.Domain.Validation;
 
 namespace KvStore.Core.Application.KeyValue.Commands.PutKeyValue;
 
@@ -13,6 +14,7 @@ public sealed class PutKeyValueCommandHandler(
     public Task<KeyValueResponse> Handle(PutKeyValueCommand command, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(command);
+        KeyValidator.EnsureValid(command.Key);
 
         return keyLockProvider.ExecuteWithLockAsync(command.Key, async token =>
         {

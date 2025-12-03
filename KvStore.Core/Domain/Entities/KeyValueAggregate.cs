@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using KvStore.Core.Domain.Exceptions;
+using KvStore.Core.Domain.Validation;
 
 namespace KvStore.Core.Domain.Entities;
 
@@ -7,6 +8,7 @@ public sealed class KeyValueAggregate
 {
     private KeyValueAggregate(string key, JsonNode? value, long version)
     {
+        KeyValidator.EnsureValid(key);
         Key = key;
         Value = value?.DeepClone();
         Version = version;
@@ -17,10 +19,7 @@ public sealed class KeyValueAggregate
     public long Version { get; private set; }
 
     public static KeyValueAggregate Create(string key, JsonNode? value)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(key);
-        return new KeyValueAggregate(key, value, 1);
-    }
+        => new(key, value, 1);
 
     public KeyValueAggregate Clone()
     {

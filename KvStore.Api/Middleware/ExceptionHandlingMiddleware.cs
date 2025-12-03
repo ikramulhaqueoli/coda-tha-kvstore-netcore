@@ -15,6 +15,10 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
         {
             context.Response.StatusCode = StatusCodes.Status499ClientClosedRequest;
         }
+        catch (InvalidKeyException ex)
+        {
+            await WriteProblemAsync(context, StatusCodes.Status400BadRequest, ex.Message);
+        }
         catch (VersionMismatchException ex)
         {
             await WriteProblemAsync(context, StatusCodes.Status409Conflict, ex.Message);

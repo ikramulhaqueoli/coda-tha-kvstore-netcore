@@ -31,10 +31,10 @@ public sealed class KeyValueCommandHandlerTests : IDisposable
     public async Task Patch_Merges_Shallow_Object()
     {
         var initial = JsonNode.Parse("""{"name":"Ari","points":10}""");
-        await _putHandler.Handle(new PutKeyValueCommand("user:1", initial, null), CancellationToken.None);
+        await _putHandler.Handle(new PutKeyValueCommand("user1", initial, null), CancellationToken.None);
 
         var delta = JsonNode.Parse("""{"rank":"gold","points":15}""");
-        var response = await _patchHandler.Handle(new PatchKeyValueCommand("user:1", delta, null), CancellationToken.None);
+        var response = await _patchHandler.Handle(new PatchKeyValueCommand("user1", delta, null), CancellationToken.None);
 
         Assert.Equal(2, response.Version);
         Assert.Equal("gold", response.Value?["rank"]?.GetValue<string>());
@@ -45,8 +45,8 @@ public sealed class KeyValueCommandHandlerTests : IDisposable
     [Fact]
     public async Task Patch_Replaces_When_Not_Object()
     {
-        await _putHandler.Handle(new PutKeyValueCommand("user:2", JsonValue.Create("text"), null), CancellationToken.None);
-        var response = await _patchHandler.Handle(new PatchKeyValueCommand("user:2", JsonValue.Create(42), null), CancellationToken.None);
+        await _putHandler.Handle(new PutKeyValueCommand("user2", JsonValue.Create("text"), null), CancellationToken.None);
+        var response = await _patchHandler.Handle(new PatchKeyValueCommand("user2", JsonValue.Create(42), null), CancellationToken.None);
 
         Assert.Equal(2, response.Version);
         Assert.Equal(42, response.Value?.GetValue<int>());
@@ -55,15 +55,26 @@ public sealed class KeyValueCommandHandlerTests : IDisposable
     [Fact]
     public async Task Put_With_Mismatched_Version_Throws()
     {
-        await _putHandler.Handle(new PutKeyValueCommand("user:3", JsonValue.Create(1), null), CancellationToken.None);
+        await _putHandler.Handle(new PutKeyValueCommand("user3", JsonValue.Create(1), null), CancellationToken.None);
         await Assert.ThrowsAsync<VersionMismatchException>(() =>
-            _putHandler.Handle(new PutKeyValueCommand("user:3", JsonValue.Create(2), 99), CancellationToken.None));
+            _putHandler.Handle(new PutKeyValueCommand("user3", JsonValue.Create(2), 99), CancellationToken.None));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("user:bad")]
+    [InlineData("bad-key")]
+    public async Task Invalid_Key_Fails(string key)
+    {
+        await Assert.ThrowsAsync<InvalidKeyException>(() =>
+            _putHandler.Handle(new PutKeyValueCommand(key, JsonValue.Create(1), null), CancellationToken.None));
     }
 
     [Fact]
     public async Task Concurrent_Clients_Increment_Without_Lost_Updates()
     {
-        const string key = "counter";
+        const string key = "counter1";
         const int clients = 3;
         const int incrementsPerClient = 100;
 
