@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
-using KvStore.Core.Application.KeyValue.Commands;
-using KvStore.Core.Application.KeyValue.Queries;
+using KvStore.Core.Application.KeyValue.Commands.PatchKeyValue;
+using KvStore.Core.Application.KeyValue.Commands.PutKeyValue;
+using KvStore.Core.Application.KeyValue.Queries.GetKeyValue;
 using KvStore.Core.Domain.Exceptions;
 using KvStore.Infrastructure.Concurrency;
 using KvStore.Infrastructure.Persistence;

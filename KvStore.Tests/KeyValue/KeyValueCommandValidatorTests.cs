@@ -14,7 +14,7 @@ public sealed class KeyValueCommandValidatorTests
     [InlineData("")]
     [InlineData("   ")]
     [InlineData("bad key")]
-    [InlineData("bad*key")]
+    [InlineData("bad/key")]
     public void Put_Command_Invalid_Key_Fails(string key)
     {
         Assert.Throws<InvalidKeyException>(() =>
