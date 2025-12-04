@@ -74,7 +74,7 @@ public sealed class KvStoreNodeClient(IHttpClientFactory httpClientFactory) : IK
             Path = $"kv/{Uri.EscapeDataString(key)}",
             Query = expectedVersion.HasValue ? $"ifVersion={expectedVersion.Value}" : string.Empty
         };
-        return new Uri(builder.ToString().Replace("http://", "https://"));
+        return builder.Uri;
     }
 
     private static Uri BuildKeysUri(NodeDefinition node)
