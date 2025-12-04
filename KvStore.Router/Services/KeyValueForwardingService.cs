@@ -9,22 +9,33 @@ public sealed class KeyValueForwardingService(
     IKeyPartitioner partitioner,
     IKvStoreNodeClient nodeClient) : IKeyValueForwardingService
 {
-    public Task<KeyValueRecord> GetAsync(string key, CancellationToken cancellationToken)
+    public async Task<ForwardedKeyValueResult> GetAsync(string key, CancellationToken cancellationToken)
     {
         var node = partitioner.SelectNode(key);
-        return nodeClient.GetAsync(node, key, cancellationToken);
+        var record = await nodeClient.GetAsync(node, key, cancellationToken);
+        return new ForwardedKeyValueResult(record, node.Id);
     }
 
-    public async Task<KeyValueRecord> PutAsync(string key, JsonNode? payload, long? expectedVersion, CancellationToken cancellationToken)
+    public async Task<ForwardedKeyValueResult> PutAsync(
+        string key,
+        JsonNode? payload,
+        long? expectedVersion,
+        CancellationToken cancellationToken)
     {
         var node = partitioner.SelectNode(key);
-        return await nodeClient.PutAsync(node, key, payload, expectedVersion, cancellationToken);
+        var record = await nodeClient.PutAsync(node, key, payload, expectedVersion, cancellationToken);
+        return new ForwardedKeyValueResult(record, node.Id);
     }
 
-    public async Task<KeyValueRecord> PatchAsync(string key, JsonNode? payload, long? expectedVersion, CancellationToken cancellationToken)
+    public async Task<ForwardedKeyValueResult> PatchAsync(
+        string key,
+        JsonNode? payload,
+        long? expectedVersion,
+        CancellationToken cancellationToken)
     {
         var node = partitioner.SelectNode(key);
-        return await nodeClient.PatchAsync(node, key, payload, expectedVersion, cancellationToken);
+        var record = await nodeClient.PatchAsync(node, key, payload, expectedVersion, cancellationToken);
+        return new ForwardedKeyValueResult(record, node.Id);
     }
 }
 

@@ -43,12 +43,15 @@ public sealed class KeyValueController(
     [HttpGet("{key}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<KeyValueRecord>> GetAsync(string key, CancellationToken cancellationToken)
+    public async Task<ActionResult<KeyValueRecord>> GetAsync(
+        string key,
+        CancellationToken cancellationToken,
+        [FromQuery] bool debug = false)
     {
         try
         {
-            var record = await forwardingService.GetAsync(key, cancellationToken);
-            return Ok(record);
+            var result = await forwardingService.GetAsync(key, cancellationToken);
+            return Ok(CreateResponse(result, debug));
         }
         catch (NodeHttpException ex)
         {
@@ -68,12 +71,13 @@ public sealed class KeyValueController(
         string key,
         [FromBody] JsonNode? value,
         [FromQuery(Name = "ifVersion")] long? expectedVersion,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        [FromQuery] bool debug = false)
     {
         try
         {
-            var record = await forwardingService.PutAsync(key, value, expectedVersion, cancellationToken);
-            return Ok(record);
+            var result = await forwardingService.PutAsync(key, value, expectedVersion, cancellationToken);
+            return Ok(CreateResponse(result, debug));
         }
         catch (NodeHttpException ex)
         {
@@ -93,12 +97,13 @@ public sealed class KeyValueController(
         string key,
         [FromBody] JsonNode? delta,
         [FromQuery(Name = "ifVersion")] long? expectedVersion,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        [FromQuery] bool debug = false)
     {
         try
         {
-            var record = await forwardingService.PatchAsync(key, delta, expectedVersion, cancellationToken);
-            return Ok(record);
+            var result = await forwardingService.PatchAsync(key, delta, expectedVersion, cancellationToken);
+            return Ok(CreateResponse(result, debug));
         }
         catch (NodeHttpException ex)
         {
@@ -148,6 +153,22 @@ public sealed class KeyValueController(
         return StatusCode(
             StatusCodes.Status503ServiceUnavailable,
             new { error = $"Node '{exception.Node.Id}' is unavailable." });
+    }
+
+    private static object CreateResponse(ForwardedKeyValueResult result, bool debug)
+    {
+        if (!debug)
+        {
+            return result.Record;
+        }
+
+        return new
+        {
+            result.Record.Key,
+            result.Record.Value,
+            result.Record.Version,
+            debug = new { node = result.NodeId }
+        };
     }
 }
 

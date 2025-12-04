@@ -15,7 +15,7 @@ public sealed class KvStoreNodeClient(IHttpClientFactory httpClientFactory) : IK
         PropertyNameCaseInsensitive = true
     };
 
-    public async Task<KeyValueRecord?> GetAsync(NodeDefinition node, string key, CancellationToken cancellationToken)
+    public async Task<KeyValueRecord> GetAsync(NodeDefinition node, string key, CancellationToken cancellationToken)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, BuildKeyUri(node, key));
         using var response = await SendAsync(node, request, cancellationToken);
@@ -74,7 +74,7 @@ public sealed class KvStoreNodeClient(IHttpClientFactory httpClientFactory) : IK
             Path = $"kv/{Uri.EscapeDataString(key)}",
             Query = expectedVersion.HasValue ? $"ifVersion={expectedVersion.Value}" : string.Empty
         };
-        return builder.Uri;
+        return new Uri(builder.ToString().Replace("http://", "https://"));
     }
 
     private static Uri BuildKeysUri(NodeDefinition node)
