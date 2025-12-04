@@ -1,8 +1,10 @@
+using System.Collections.Generic;
 using System.Text.Json.Nodes;
 using KvStore.Core.Application.Abstractions;
 using KvStore.Core.Application.KeyValue.Commands.PatchKeyValue;
 using KvStore.Core.Application.KeyValue.Commands.PutKeyValue;
 using KvStore.Core.Application.KeyValue.Queries.GetKeyValue;
+using KvStore.Core.Application.KeyValue.Queries.ListKeys;
 using KvStore.Core.Application.KeyValue.Responses;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,6 +16,14 @@ public sealed class KeyValueController(
     IQueryDispatcher queryDispatcher,
     ICommandDispatcher commandDispatcher) : ControllerBase
 {
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<string>>> ListAsync(CancellationToken cancellationToken)
+    {
+        var keys = await queryDispatcher.DispatchAsync(new ListKeysQuery(), cancellationToken);
+        return Ok(keys);
+    }
+
     [HttpGet("{key}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

@@ -1,0 +1,55 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kvstore-router
+  labels:
+    app: kvstore-router
+spec:
+  type: ClusterIP
+  selector:
+    app: kvstore-router
+  ports:
+    - name: http
+      port: 7001
+      targetPort: 7001
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kvstore-router
+  labels:
+    app: kvstore-router
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: kvstore-router
+  template:
+    metadata:
+      labels:
+        app: kvstore-router
+    spec:
+      containers:
+        - name: kvstore-router
+          image: kvstore-router:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 7001
+          env:
+            - name: ASPNETCORE_URLS
+              value: "http://+:7001"
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 7001
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 7001
+            initialDelaySeconds: 5
+            periodSeconds: 10
+

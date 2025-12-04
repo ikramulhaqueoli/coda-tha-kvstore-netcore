@@ -1,0 +1,18 @@
+@KvStore.Router_HostAddress = http://localhost:7001
+
+### List keys across nodes (NDJSON)
+GET {{KvStore.Router_HostAddress}}/kv
+Accept: application/x-ndjson
+
+### Fetch a specific key
+GET {{KvStore.Router_HostAddress}}/kv/sample-key
+Accept: application/json
+
+### Upsert a value
+PUT {{KvStore.Router_HostAddress}}/kv/sample-key
+Content-Type: application/json
+
+{
+  "name": "Ari",
+  "points": 10
+}

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json.Nodes;
+using System.Collections.Generic;
 using KvStore.E2eTest.Fixtures;
 using Xunit;
 
@@ -90,6 +91,28 @@ public sealed class KeyValueEndpointE2eTests
 
         var response = await client.GetAsync($"/kv/missing{Guid.NewGuid():N}");
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task List_Keys_Returns_All_Inserted_Keys()
+    {
+        using var factory = new KvStoreApiFactory();
+        using var client = factory.CreateClient();
+
+        var keys = new[] { "alpha", "beta", "gamma" };
+
+        foreach (var key in keys)
+        {
+            await PutAsync(client, key, new { marker = key });
+        }
+
+        var response = await client.GetAsync("/kv");
+        response.EnsureSuccessStatusCode();
+
+        var payload = await response.Content.ReadFromJsonAsync<string[]>() ??
+                      throw new InvalidOperationException("Response did not contain a body.");
+
+        Assert.Subset(payload.ToHashSet(StringComparer.Ordinal), keys.ToHashSet(StringComparer.Ordinal));
     }
 
     private static async Task<KeyValueRecord> PutAsync(HttpClient client, string key, object payload, long? expectedVersion = null)

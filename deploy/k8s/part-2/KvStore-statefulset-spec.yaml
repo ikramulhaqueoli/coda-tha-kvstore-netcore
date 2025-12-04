@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kvstore-api-headless
+  labels:
+    app: kvstore-api
+spec:
+  clusterIP: None
+  selector:
+    app: kvstore-api
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kvstore-api
+  labels:
+    app: kvstore-api
+spec:
+  serviceName: kvstore-api-headless
+  replicas: 5
+  selector:
+    matchLabels:
+      app: kvstore-api
+  template:
+    metadata:
+      labels:
+        app: kvstore-api
+    spec:
+      containers:
+        - name: kvstore-api
+          image: ikramulhaqueoli/kvstore-api:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 7000
+          env:
+            - name: ASPNETCORE_URLS
+              value: "http://+:7000"
+            - name: NODE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 7000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 7000
+            initialDelaySeconds: 5
+            periodSeconds: 10

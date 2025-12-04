@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kvstore-router-pod
+  labels:
+    app: kvstore-router
+spec:
+  containers:
+    - name: kvstore-router
+      image: ikramulhaqueoli/kvstore-router:latest
+      imagePullPolicy: Always
+      ports:
+        - containerPort: 7001
+          name: http
+      env:
+        - name: ASPNETCORE_URLS
+          value: "http://+:7001"
+        - name: ASPNETCORE_ENVIRONMENT
+          value: "Production"
+      readinessProbe:
+        httpGet:
+          path: /health
+          port: http
+        initialDelaySeconds: 5
+        periodSeconds: 5
+      livenessProbe:
+        httpGet:
+          path: /health
+          port: http
+        initialDelaySeconds: 5
+        periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kvstore-router-lb
+  labels:
+    app: kvstore-router
+spec:
+  type: LoadBalancer
+  selector:
+    app: kvstore-router
+  ports:
+    - name: http
+      port: 80
+      targetPort: 7001
+

@@ -4,6 +4,7 @@ using KvStore.Core.Application.Dispatchers;
 using KvStore.Core.Application.KeyValue.Commands.PatchKeyValue;
 using KvStore.Core.Application.KeyValue.Commands.PutKeyValue;
 using KvStore.Core.Application.KeyValue.Queries.GetKeyValue;
+using KvStore.Core.Application.KeyValue.Queries.ListKeys;
 using KvStore.Core.Application.KeyValue.Responses;
 using KvStore.Infrastructure.DependencyInjection;
 
@@ -23,6 +24,7 @@ builder.Services.AddScoped<IQueryDispatcher, QueryDispatcher>();
 builder.Services.AddScoped<ICommandHandler<PutKeyValueCommand, KeyValueResponse>, PutKeyValueCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<PatchKeyValueCommand, KeyValueResponse>, PatchKeyValueCommandHandler>();
 builder.Services.AddScoped<IQueryHandler<GetKeyValueQuery, KeyValueResponse>, GetKeyValueQueryHandler>();
+builder.Services.AddScoped<IQueryHandler<ListKeysQuery, IReadOnlyCollection<string>>, ListKeysQueryHandler>();
 builder.Services.AddScoped<ICommandValidator<PutKeyValueCommand>, PutKeyValueCommandValidator>();
 builder.Services.AddScoped<ICommandValidator<PatchKeyValueCommand>, PatchKeyValueCommandValidator>();
 
