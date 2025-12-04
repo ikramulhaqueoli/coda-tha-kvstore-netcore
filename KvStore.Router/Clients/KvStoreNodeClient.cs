@@ -1,4 +1,3 @@
-using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using KvStore.Router.Models;
@@ -71,7 +70,7 @@ public sealed class KvStoreNodeClient(IHttpClientFactory httpClientFactory) : IK
     {
         var builder = new UriBuilder(node.BaseAddress)
         {
-            Path = $"kv/{Uri.EscapeDataString(key)}",
+            Path = $"api/kv/{Uri.EscapeDataString(key)}",
             Query = expectedVersion.HasValue ? $"ifVersion={expectedVersion.Value}" : string.Empty
         };
         return builder.Uri;
@@ -81,7 +80,7 @@ public sealed class KvStoreNodeClient(IHttpClientFactory httpClientFactory) : IK
     {
         var builder = new UriBuilder(node.BaseAddress)
         {
-            Path = "kv"
+            Path = "api/kv"
         };
         return builder.Uri;
     }
