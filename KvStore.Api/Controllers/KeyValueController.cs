@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace KvStore.Api.Controllers;
 
 [ApiController]
-[Route("kv")]
+[Route("api/kv")]
 public sealed class KeyValueController(
     IQueryDispatcher queryDispatcher,
     ICommandDispatcher commandDispatcher) : ControllerBase
