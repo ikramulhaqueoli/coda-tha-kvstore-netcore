@@ -6,7 +6,7 @@ namespace KvStore.Core.Domain.Entities;
 
 public sealed class KeyValueAggregate
 {
-    private KeyValueAggregate(string key, JsonNode? value, long version)
+    private KeyValueAggregate(string key, JsonNode? value, int version)
     {
         KeyValidator.EnsureValid(key);
         Key = key;
@@ -16,7 +16,7 @@ public sealed class KeyValueAggregate
 
     public string Key { get; }
     public JsonNode? Value { get; private set; }
-    public long Version { get; private set; }
+    public int Version { get; private set; }
 
     public static KeyValueAggregate Create(string key, JsonNode? value)
         => new(key, value, 1);
@@ -26,14 +26,14 @@ public sealed class KeyValueAggregate
         return new KeyValueAggregate(Key, Value?.DeepClone(), Version);
     }
 
-    public void Replace(JsonNode? newValue, long? expectedVersion)
+    public void Replace(JsonNode? newValue, int? expectedVersion)
     {
         EnsureVersion(expectedVersion);
         Value = newValue?.DeepClone();
         Version += 1;
     }
 
-    public void Merge(JsonNode? delta, long? expectedVersion)
+    public void Merge(JsonNode? delta, int? expectedVersion)
     {
         EnsureVersion(expectedVersion);
 
@@ -60,7 +60,7 @@ public sealed class KeyValueAggregate
         return new KeyValueResponseSnapshot(Key, Value?.DeepClone(), Version);
     }
 
-    private void EnsureVersion(long? expectedVersion)
+    private void EnsureVersion(int? expectedVersion)
     {
         if (!expectedVersion.HasValue)
         {
@@ -74,5 +74,5 @@ public sealed class KeyValueAggregate
     }
 }
 
-public sealed record KeyValueResponseSnapshot(string Key, JsonNode? Value, long Version);
+public sealed record KeyValueResponseSnapshot(string Key, JsonNode? Value, int Version);
 

@@ -12,14 +12,14 @@ public interface IKvStoreNodeClient
         NodeDefinition node,
         string key,
         JsonNode? payload,
-        long? expectedVersion,
+        int? expectedVersion,
         CancellationToken cancellationToken);
 
     Task<KeyValueRecord> PatchAsync(
         NodeDefinition node,
         string key,
         JsonNode? payload,
-        long? expectedVersion,
+        int? expectedVersion,
         CancellationToken cancellationToken);
 
     Task<IReadOnlyCollection<string>> ListKeysAsync(NodeDefinition node, CancellationToken cancellationToken);

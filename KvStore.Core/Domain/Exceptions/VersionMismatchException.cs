@@ -2,7 +2,7 @@ namespace KvStore.Core.Domain.Exceptions;
 
 public sealed class VersionMismatchException : Exception
 {
-    public VersionMismatchException(string key, long expectedVersion, long? currentVersion)
+    public VersionMismatchException(string key, int expectedVersion, int? currentVersion)
         : base($"Version mismatch for key '{key}'. Expected {expectedVersion}, actual {currentVersion?.ToString() ?? "null"}.")
     {
         Key = key;
@@ -11,7 +11,7 @@ public sealed class VersionMismatchException : Exception
     }
 
     public string Key { get; }
-    public long ExpectedVersion { get; }
-    public long? CurrentVersion { get; }
+    public int ExpectedVersion { get; }
+    public int? CurrentVersion { get; }
 }
 

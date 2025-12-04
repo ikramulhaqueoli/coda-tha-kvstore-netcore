@@ -10,13 +10,13 @@ public interface IKeyValueForwardingService
     Task<ForwardedKeyValueResult> PutAsync(
         string key,
         JsonNode? payload,
-        long? expectedVersion,
+        int? expectedVersion,
         CancellationToken cancellationToken);
 
     Task<ForwardedKeyValueResult> PatchAsync(
         string key,
         JsonNode? payload,
-        long? expectedVersion,
+        int? expectedVersion,
         CancellationToken cancellationToken);
 }
 

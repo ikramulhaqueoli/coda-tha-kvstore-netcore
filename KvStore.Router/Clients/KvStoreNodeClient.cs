@@ -26,7 +26,7 @@ public sealed class KvStoreNodeClient(IHttpClientFactory httpClientFactory) : IK
         NodeDefinition node,
         string key,
         JsonNode? payload,
-        long? expectedVersion,
+        int? expectedVersion,
         CancellationToken cancellationToken)
     {
         using var request = new HttpRequestMessage(HttpMethod.Put, BuildKeyUri(node, key, expectedVersion))
@@ -43,7 +43,7 @@ public sealed class KvStoreNodeClient(IHttpClientFactory httpClientFactory) : IK
         NodeDefinition node,
         string key,
         JsonNode? payload,
-        long? expectedVersion,
+        int? expectedVersion,
         CancellationToken cancellationToken)
     {
         using var request = new HttpRequestMessage(HttpMethod.Patch, BuildKeyUri(node, key, expectedVersion))
@@ -66,7 +66,7 @@ public sealed class KvStoreNodeClient(IHttpClientFactory httpClientFactory) : IK
         return keys ?? Array.Empty<string>();
     }
 
-    private static Uri BuildKeyUri(NodeDefinition node, string key, long? expectedVersion = null)
+    private static Uri BuildKeyUri(NodeDefinition node, string key, int? expectedVersion = null)
     {
         var builder = new UriBuilder(node.BaseAddress)
         {

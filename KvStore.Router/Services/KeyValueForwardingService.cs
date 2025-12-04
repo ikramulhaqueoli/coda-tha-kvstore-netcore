@@ -19,7 +19,7 @@ public sealed class KeyValueForwardingService(
     public async Task<ForwardedKeyValueResult> PutAsync(
         string key,
         JsonNode? payload,
-        long? expectedVersion,
+        int? expectedVersion,
         CancellationToken cancellationToken)
     {
         var node = partitioner.SelectNode(key);
@@ -30,7 +30,7 @@ public sealed class KeyValueForwardingService(
     public async Task<ForwardedKeyValueResult> PatchAsync(
         string key,
         JsonNode? payload,
-        long? expectedVersion,
+        int? expectedVersion,
         CancellationToken cancellationToken)
     {
         var node = partitioner.SelectNode(key);

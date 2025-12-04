@@ -70,7 +70,7 @@ public sealed class KeyValueController(
     public async Task<ActionResult<KeyValueRecord>> PutAsync(
         string key,
         [FromBody] JsonNode? value,
-        [FromQuery(Name = "ifVersion")] long? expectedVersion,
+        [FromQuery(Name = "ifVersion")] int? expectedVersion,
         CancellationToken cancellationToken,
         [FromQuery] bool debug = false)
     {
@@ -96,7 +96,7 @@ public sealed class KeyValueController(
     public async Task<ActionResult<KeyValueRecord>> PatchAsync(
         string key,
         [FromBody] JsonNode? delta,
-        [FromQuery(Name = "ifVersion")] long? expectedVersion,
+        [FromQuery(Name = "ifVersion")] int? expectedVersion,
         CancellationToken cancellationToken,
         [FromQuery] bool debug = false)
     {

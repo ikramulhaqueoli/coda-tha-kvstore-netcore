@@ -25,7 +25,7 @@ public sealed class KeyValueEndpointE2eTests
         var responses = await Task.WhenAll(tasks);
 
         var orderedVersions = responses
-            .Select(r => (int)r.Version)
+            .Select(r => r.Version)
             .OrderBy(v => v)
             .ToArray();
 
@@ -115,7 +115,7 @@ public sealed class KeyValueEndpointE2eTests
         Assert.Subset(payload.ToHashSet(StringComparer.Ordinal), keys.ToHashSet(StringComparer.Ordinal));
     }
 
-    private static async Task<KeyValueRecord> PutAsync(HttpClient client, string key, object payload, long? expectedVersion = null)
+    private static async Task<KeyValueRecord> PutAsync(HttpClient client, string key, object payload, int? expectedVersion = null)
     {
         var url = $"/kv/{key}";
         if (expectedVersion.HasValue)
@@ -137,7 +137,7 @@ public sealed class KeyValueEndpointE2eTests
                throw new InvalidOperationException("Response did not contain a body.");
     }
 
-    private static async Task<KeyValueRecord> PatchAsync(HttpClient client, string key, object payload, long? expectedVersion = null)
+    private static async Task<KeyValueRecord> PatchAsync(HttpClient client, string key, object payload, int? expectedVersion = null)
     {
         var url = $"/kv/{key}";
         if (expectedVersion.HasValue)
@@ -151,6 +151,6 @@ public sealed class KeyValueEndpointE2eTests
                throw new InvalidOperationException("Response did not contain a body.");
     }
 
-    private sealed record KeyValueRecord(string Key, JsonNode? Value, long Version);
+    private sealed record KeyValueRecord(string Key, JsonNode? Value, int Version);
 }
 
