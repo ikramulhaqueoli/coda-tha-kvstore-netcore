@@ -42,8 +42,7 @@ public sealed class KVStoreApiE2eTestsPart1
         _client = fixture.Client;
     }
 
-    // Case: Plain PUT creates a brand-new key with version 1.
-    [Fact]
+    [Fact(DisplayName = "Case: Plain PUT creates a brand-new key with version 1.")]
     public async Task Put_CreatesNewKey_ReturnsVersionOne()
     {
         var key = CreateKey();
@@ -57,8 +56,7 @@ public sealed class KVStoreApiE2eTestsPart1
         Assert.Equal(1, payload.Version);
     }
 
-    // Case: Conditional PUT succeeds when ifVersion matches current version.
-    [Fact]
+    [Fact(DisplayName = "Case: Conditional PUT succeeds when ifVersion matches current version.")]
     public async Task Put_ConditionalSuccess_UsesOptimisticLock()
     {
         var key = CreateKey();
@@ -73,8 +71,7 @@ public sealed class KVStoreApiE2eTestsPart1
         Assert.Equal(initialPayload.Version + 1, updatedPayload.Version);
     }
 
-    // Case: Conditional PUT fails with 409 when version mismatches.
-    [Fact]
+    [Fact(DisplayName = "Case: Conditional PUT fails with 409 when version mismatches.")]
     public async Task Put_ConditionalMismatch_ReturnsConflictAndPreservesVersion()
     {
         var key = CreateKey();
@@ -91,8 +88,7 @@ public sealed class KVStoreApiE2eTestsPart1
         Assert.Equal(1, current.Value!.GetValue<int>());
     }
 
-    // Case: GET retrieves an existing key with stored payload.
-    [Fact]
+    [Fact(DisplayName = "Case: GET retrieves an existing key with stored payload.")]
     public async Task Get_ExistingKey_ReturnsStoredValue()
     {
         var key = CreateKey();
@@ -108,16 +104,14 @@ public sealed class KVStoreApiE2eTestsPart1
         AssertJsonEqual(value, payload.Value);
     }
 
-    // Case: GET against unknown key returns 404.
-    [Fact]
+    [Fact(DisplayName = "Case: GET against unknown key returns 404.")]
     public async Task Get_MissingKey_ReturnsNotFound()
     {
         using var response = await GetAsync($"missing-{Guid.NewGuid():N}");
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    // Case: PATCH merges JSON objects shallowly, preserving prior fields.
-    [Fact]
+    [Fact(DisplayName = "Case: PATCH merges JSON objects shallowly, preserving prior fields.")]
     public async Task Patch_MergesObjectsShallowly()
     {
         var key = CreateKey();
@@ -135,8 +129,7 @@ public sealed class KVStoreApiE2eTestsPart1
         Assert.Equal(2, payload.Version);
     }
 
-    // Case: Primitive delta against object value replaces entire value.
-    [Fact]
+    [Fact(DisplayName = "Case: Primitive delta against object value replaces entire value.")]
     public async Task Patch_WithPrimitiveDeltaReplacesExistingObject()
     {
         var key = CreateKey();
@@ -152,8 +145,7 @@ public sealed class KVStoreApiE2eTestsPart1
         Assert.Equal(2, payload.Version);
     }
 
-    // Case: Conditional PATCH with wrong version yields 409 and no change.
-    [Fact]
+    [Fact(DisplayName = "Case: Conditional PATCH with wrong version yields 409 and no change.")]
     public async Task Patch_ConditionalMismatchReturnsConflict()
     {
         var key = CreateKey();
@@ -169,8 +161,7 @@ public sealed class KVStoreApiE2eTestsPart1
         AssertJsonEqual(ParseJson("""{"points":10}"""), current.Value);
     }
 
-    // Case: Successful writes increment version exactly once; failed guards don’t.
-    [Fact]
+    [Fact(DisplayName = "Case: Successful writes increment version exactly once; failed guards don’t.")]
     public async Task VersionsIncrementExactlyOncePerSuccessfulWrite()
     {
         var key = CreateKey();
@@ -195,8 +186,7 @@ public sealed class KVStoreApiE2eTestsPart1
         Assert.Equal(3, finalState.Version);
     }
 
-    // Case: Concurrent 3 Clients Increment Counters 100 Times and Gets final Version 301.
-    [Fact]
+    [Fact(DisplayName = "Case: Concurrent 3 clients increment counters 100 times and version reaches 301.")]
     public async Task Concurrent3ClientsIncrementCounters100TimesAndGetsFinalVersion301()
     {
         var key = CreateKey();
@@ -221,8 +211,7 @@ public sealed class KVStoreApiE2eTestsPart1
 
     #region Additional coverage (optional)
 
-    // Case: A second PUT without guards overwrites value and bumps version.
-    [Fact]
+    [Fact(DisplayName = "Case: A second PUT without guards overwrites value and bumps version.")]
     public async Task Put_OverwriteWithoutGuard_IncrementsVersion()
     {
         var key = CreateKey();
@@ -239,8 +228,7 @@ public sealed class KVStoreApiE2eTestsPart1
         Assert.Equal(2, payload.Version);
     }
 
-    // Case: PUT with malformed JSON body returns 400.
-    [Fact]
+    [Fact(DisplayName = "Case: PUT with malformed JSON body returns 400.")]
     public async Task Put_WithMalformedJson_ReturnsBadRequest()
     {
         var key = CreateKey();
@@ -249,8 +237,7 @@ public sealed class KVStoreApiE2eTestsPart1
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    // Case: PUT with empty body stores null (API treats missing payload as null JSON).
-    [Fact]
+    [Fact(DisplayName = "Case: PUT with empty body stores null (missing payload treated as null JSON).")]
     public async Task Put_WithEmptyBody_CreatesNullValue()
     {
         var key = CreateKey();
@@ -261,8 +248,7 @@ public sealed class KVStoreApiE2eTestsPart1
         Assert.Equal(1, payload.Version);
     }
 
-    // Case: PATCH upserts when key absent with version starting at 1.
-    [Fact]
+    [Fact(DisplayName = "Case: PATCH upserts when key absent with version starting at 1.")]
     public async Task Patch_CreateNewKeyWhenAbsent()
     {
         var key = CreateKey();
@@ -275,8 +261,7 @@ public sealed class KVStoreApiE2eTestsPart1
         AssertJsonEqual(delta, payload.Value);
     }
 
-    // Case: PATCH merge overwrites existing field values.
-    [Fact]
+    [Fact(DisplayName = "Case: PATCH merge overwrites existing field values.")]
     public async Task Patch_MergeOverwritesExistingFields()
     {
         var key = CreateKey();
@@ -294,8 +279,7 @@ public sealed class KVStoreApiE2eTestsPart1
         Assert.Equal(2, payload.Version);
     }
 
-    // Case: Existing primitive plus object delta acts like replace.
-    [Fact]
+    [Fact(DisplayName = "Case: Existing primitive plus object delta acts like replace.")]
     public async Task Patch_WithExistingPrimitiveTreatsDeltaAsReplace()
     {
         var key = CreateKey();
@@ -312,8 +296,7 @@ public sealed class KVStoreApiE2eTestsPart1
         Assert.Equal(2, payload.Version);
     }
 
-    // Case: Conditional PATCH succeeds with matching version guard.
-    [Fact]
+    [Fact(DisplayName = "Case: Conditional PATCH succeeds with matching version guard.")]
     public async Task Patch_ConditionalSuccessHonorsVersion()
     {
         var key = CreateKey();
@@ -328,8 +311,7 @@ public sealed class KVStoreApiE2eTestsPart1
         AssertJsonEqual(expected, patched.Value);
     }
 
-    // Case: PATCH with malformed JSON returns 400.
-    [Fact]
+    [Fact(DisplayName = "Case: PATCH with malformed JSON returns 400.")]
     public async Task Patch_WithMalformedJsonReturnsBadRequest()
     {
         var key = CreateKey();
@@ -337,8 +319,7 @@ public sealed class KVStoreApiE2eTestsPart1
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    // Case: Different keys can be mutated in parallel without interference.
-    [Fact]
+    [Fact(DisplayName = "Case: Different keys can be mutated in parallel without interference.")]
     public async Task ParallelOperationsOnDifferentKeysSucceedIndependently()
     {
         var keyA = CreateKey();
@@ -363,8 +344,7 @@ public sealed class KVStoreApiE2eTestsPart1
         Assert.Equal(40, payloadB.Value!.GetValue<int>());
     }
 
-    // Case: Two guarded writes where only one should succeed; the other conflicts.
-    [Fact]
+    [Fact(DisplayName = "Case: Two guarded writes where only one should succeed; the other conflicts.")]
     public async Task ConcurrentGuardedWritesResultInSingleSuccess()
     {
         var key = CreateKey();
@@ -394,8 +374,7 @@ public sealed class KVStoreApiE2eTestsPart1
         Assert.True(finalValue is "first" or "second");
     }
 
-    // Case: Invalid key containing whitespace fails fast with 400.
-    [Fact]
+    [Fact(DisplayName = "Case: Invalid key containing whitespace fails fast with 400.")]
     public async Task InvalidKeyContainingWhitespaceReturnsBadRequest()
     {
         const string key = "   ";
