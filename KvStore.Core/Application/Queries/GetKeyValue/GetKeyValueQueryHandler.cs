@@ -4,7 +4,7 @@ using KvStore.Core.Domain.Exceptions;
 using KvStore.Core.Domain.Repositories;
 using KvStore.Core.Domain.Validation;
 
-namespace KvStore.Core.Application.KeyValue.Queries.GetKeyValue;
+namespace KvStore.Core.Application.Queries.GetKeyValue;
 
 public sealed class GetKeyValueQueryHandler(
     IKeyValueRepository repository,

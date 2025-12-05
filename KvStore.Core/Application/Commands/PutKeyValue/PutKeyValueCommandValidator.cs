@@ -1,7 +1,7 @@
 using KvStore.Core.Application.Abstractions;
 using KvStore.Core.Domain.Validation;
 
-namespace KvStore.Core.Application.KeyValue.Commands.PutKeyValue;
+namespace KvStore.Core.Application.Commands.PutKeyValue;
 
 public sealed class PutKeyValueCommandValidator : ICommandValidator<PutKeyValueCommand>
 {

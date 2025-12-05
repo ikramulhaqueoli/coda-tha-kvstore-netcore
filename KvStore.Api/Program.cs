@@ -1,11 +1,12 @@
 using KvStore.Api.Middleware;
 using KvStore.Core.Application.Abstractions;
-using KvStore.Core.Application.Dispatchers;
-using KvStore.Core.Application.KeyValue.Commands.PatchKeyValue;
-using KvStore.Core.Application.KeyValue.Commands.PutKeyValue;
-using KvStore.Core.Application.KeyValue.Queries.GetKeyValue;
-using KvStore.Core.Application.KeyValue.Queries.ListKeys;
+using KvStore.Core.Application.Commands;
+using KvStore.Core.Application.Commands.PatchKeyValue;
+using KvStore.Core.Application.Commands.PutKeyValue;
 using KvStore.Core.Application.KeyValue.Responses;
+using KvStore.Core.Application.Queries;
+using KvStore.Core.Application.Queries.GetKeyValue;
+using KvStore.Core.Application.Queries.ListKeys;
 using KvStore.Infrastructure.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);

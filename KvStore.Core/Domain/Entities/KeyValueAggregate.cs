@@ -62,12 +62,7 @@ public sealed class KeyValueAggregate
 
     private void EnsureVersion(int? expectedVersion)
     {
-        if (!expectedVersion.HasValue)
-        {
-            return;
-        }
-
-        if (Version != expectedVersion.Value)
+        if (expectedVersion.HasValue && Version != expectedVersion.Value)
         {
             throw new VersionMismatchException(Key, expectedVersion.Value, Version);
         }

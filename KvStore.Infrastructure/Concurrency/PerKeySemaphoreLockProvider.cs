@@ -8,7 +8,10 @@ public sealed class PerKeySemaphoreLockProvider : IKeyLockProvider, IDisposable
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new(StringComparer.Ordinal);
     private bool _disposed;
 
-    public async Task<TResult> ExecuteWithLockAsync<TResult>(string key, Func<CancellationToken, Task<TResult>> action, CancellationToken cancellationToken)
+    public async Task<TResult> ExecuteWithLockAsync<TResult>(
+        string key,
+        Func<CancellationToken, Task<TResult>> action,
+        CancellationToken cancellationToken)
     {
         ObjectDisposedException.ThrowIf(_disposed, typeof(PerKeySemaphoreLockProvider));
         ArgumentException.ThrowIfNullOrWhiteSpace(key);

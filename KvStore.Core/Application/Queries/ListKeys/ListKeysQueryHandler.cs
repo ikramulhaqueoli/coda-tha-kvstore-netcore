@@ -1,7 +1,7 @@
 using KvStore.Core.Application.Abstractions;
 using KvStore.Core.Domain.Repositories;
 
-namespace KvStore.Core.Application.KeyValue.Queries.ListKeys;
+namespace KvStore.Core.Application.Queries.ListKeys;
 
 public sealed class ListKeysQueryHandler(IKeyValueRepository repository)
     : IQueryHandler<ListKeysQuery, IReadOnlyCollection<string>>

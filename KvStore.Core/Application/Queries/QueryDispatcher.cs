@@ -1,7 +1,7 @@
 using KvStore.Core.Application.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace KvStore.Core.Application.Dispatchers;
+namespace KvStore.Core.Application.Queries;
 
 public sealed class QueryDispatcher(IServiceProvider serviceProvider) : IQueryDispatcher
 {

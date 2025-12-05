@@ -2,7 +2,7 @@ using KvStore.Core.Application.Abstractions;
 using KvStore.Core.Domain.Exceptions;
 using KvStore.Core.Domain.Validation;
 
-namespace KvStore.Core.Application.KeyValue.Commands.PatchKeyValue;
+namespace KvStore.Core.Application.Commands.PatchKeyValue;
 
 public sealed class PatchKeyValueCommandValidator : ICommandValidator<PatchKeyValueCommand>
 {

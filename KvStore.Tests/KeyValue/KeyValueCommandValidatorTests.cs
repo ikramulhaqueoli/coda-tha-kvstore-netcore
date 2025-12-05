@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
-using KvStore.Core.Application.KeyValue.Commands.PatchKeyValue;
-using KvStore.Core.Application.KeyValue.Commands.PutKeyValue;
+using KvStore.Core.Application.Commands.PatchKeyValue;
+using KvStore.Core.Application.Commands.PutKeyValue;
 using KvStore.Core.Domain.Exceptions;
 
 namespace KvStore.Tests.KeyValue;
