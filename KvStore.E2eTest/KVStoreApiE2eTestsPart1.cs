@@ -57,24 +57,6 @@ public sealed class KVStoreApiE2eTestsPart1
         Assert.Equal(1, payload.Version);
     }
 
-    // Case: A second PUT without guards overwrites value and bumps version.
-    [Fact]
-    public async Task Put_OverwriteWithoutGuard_IncrementsVersion()
-    {
-        var key = CreateKey();
-        var original = ParseJson("""{"name":"Ari","points":10}""");
-        var updated = ParseJson("""{"alias":"Ari","points":25,"active":true}""");
-
-        using var firstResponse = await PutAsync(key, original);
-        await AssertSuccessAsync(firstResponse);
-
-        using var overwriteResponse = await PutAsync(key, updated);
-        var payload = await AssertSuccessAsync(overwriteResponse);
-
-        AssertJsonEqual(updated, payload.Value);
-        Assert.Equal(2, payload.Version);
-    }
-
     // Case: Conditional PUT succeeds when ifVersion matches current version.
     [Fact]
     public async Task Put_ConditionalSuccess_UsesOptimisticLock()
@@ -109,28 +91,6 @@ public sealed class KVStoreApiE2eTestsPart1
         Assert.Equal(1, current.Value!.GetValue<int>());
     }
 
-    // Case: PUT with malformed JSON body returns 400.
-    [Fact]
-    public async Task Put_WithMalformedJson_ReturnsBadRequest()
-    {
-        var key = CreateKey();
-        using var response = await PutRawAsync(key, "{ this is not json }");
-
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-    }
-
-    // Case: PUT with empty body stores null (API treats missing payload as null JSON).
-    [Fact]
-    public async Task Put_WithEmptyBody_CreatesNullValue()
-    {
-        var key = CreateKey();
-        using var response = await PutRawAsync(key, string.Empty);
-
-        var payload = await AssertSuccessAsync(response);
-        Assert.Null(payload.Value);
-        Assert.Equal(1, payload.Version);
-    }
-
     // Case: GET retrieves an existing key with stored payload.
     [Fact]
     public async Task Get_ExistingKey_ReturnsStoredValue()
@@ -156,20 +116,6 @@ public sealed class KVStoreApiE2eTestsPart1
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    // Case: PATCH upserts when key absent with version starting at 1.
-    [Fact]
-    public async Task Patch_CreateNewKeyWhenAbsent()
-    {
-        var key = CreateKey();
-        var delta = ParseJson("""{"rank":"gold"}""");
-
-        using var response = await PatchAsync(key, delta);
-        var payload = await AssertSuccessAsync(response);
-
-        Assert.Equal(1, payload.Version);
-        AssertJsonEqual(delta, payload.Value);
-    }
-
     // Case: PATCH merges JSON objects shallowly, preserving prior fields.
     [Fact]
     public async Task Patch_MergesObjectsShallowly()
@@ -186,43 +132,6 @@ public sealed class KVStoreApiE2eTestsPart1
 
         var expected = ParseJson("""{"name":"Ari","points":10,"rank":"gold"}""");
         AssertJsonEqual(expected, payload.Value);
-        Assert.Equal(2, payload.Version);
-    }
-
-    // Case: PATCH merge overwrites existing field values.
-    [Fact]
-    public async Task Patch_MergeOverwritesExistingFields()
-    {
-        var key = CreateKey();
-        var original = ParseJson("""{"name":"Ari","points":10}""");
-        var delta = ParseJson("""{"points":20}""");
-
-        using var putResponse = await PutAsync(key, original);
-        await AssertSuccessAsync(putResponse);
-
-        using var patchResponse = await PatchAsync(key, delta);
-        var payload = await AssertSuccessAsync(patchResponse);
-
-        var expected = ParseJson("""{"name":"Ari","points":20}""");
-        AssertJsonEqual(expected, payload.Value);
-        Assert.Equal(2, payload.Version);
-    }
-
-    // Case: Existing primitive plus object delta acts like replace.
-    [Fact]
-    public async Task Patch_WithExistingPrimitiveTreatsDeltaAsReplace()
-    {
-        var key = CreateKey();
-        var primitive = JsonValue.Create(42);
-        var deltaObject = ParseJson("""{"newField":1}""");
-
-        using var putResponse = await PutAsync(key, primitive);
-        await AssertSuccessAsync(putResponse);
-
-        using var patchResponse = await PatchAsync(key, deltaObject);
-        var payload = await AssertSuccessAsync(patchResponse);
-
-        AssertJsonEqual(deltaObject, payload.Value);
         Assert.Equal(2, payload.Version);
     }
 
@@ -243,22 +152,6 @@ public sealed class KVStoreApiE2eTestsPart1
         Assert.Equal(2, payload.Version);
     }
 
-    // Case: Conditional PATCH succeeds with matching version guard.
-    [Fact]
-    public async Task Patch_ConditionalSuccessHonorsVersion()
-    {
-        var key = CreateKey();
-        using var putResponse = await PutAsync(key, ParseJson("""{"points":10}"""));
-        var initial = await AssertSuccessAsync(putResponse);
-
-        using var patchResponse = await PatchAsync(key, ParseJson("""{"rank":"gold"}"""), initial.Version);
-        var patched = await AssertSuccessAsync(patchResponse);
-
-        Assert.Equal(initial.Version + 1, patched.Version);
-        var expected = ParseJson("""{"points":10,"rank":"gold"}""");
-        AssertJsonEqual(expected, patched.Value);
-    }
-
     // Case: Conditional PATCH with wrong version yields 409 and no change.
     [Fact]
     public async Task Patch_ConditionalMismatchReturnsConflict()
@@ -274,15 +167,6 @@ public sealed class KVStoreApiE2eTestsPart1
         var current = await AssertSuccessAsync(getResponse);
         Assert.Equal(initial.Version, current.Version);
         AssertJsonEqual(ParseJson("""{"points":10}"""), current.Value);
-    }
-
-    // Case: PATCH with malformed JSON returns 400.
-    [Fact]
-    public async Task Patch_WithMalformedJsonReturnsBadRequest()
-    {
-        var key = CreateKey();
-        using var response = await PatchRawAsync(key, "{ invalid json");
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     // Case: Successful writes increment version exactly once; failed guards don’t.
@@ -333,6 +217,124 @@ public sealed class KVStoreApiE2eTestsPart1
 
         Assert.Equal(clients * incrementsPerClient, finalPayload.Value!.GetValue<int>());
         Assert.Equal(1 + clients * incrementsPerClient, finalPayload.Version);
+    }
+
+    #region Additional coverage (optional)
+
+    // Case: A second PUT without guards overwrites value and bumps version.
+    [Fact]
+    public async Task Put_OverwriteWithoutGuard_IncrementsVersion()
+    {
+        var key = CreateKey();
+        var original = ParseJson("""{"name":"Ari","points":10}""");
+        var updated = ParseJson("""{"alias":"Ari","points":25,"active":true}""");
+
+        using var firstResponse = await PutAsync(key, original);
+        await AssertSuccessAsync(firstResponse);
+
+        using var overwriteResponse = await PutAsync(key, updated);
+        var payload = await AssertSuccessAsync(overwriteResponse);
+
+        AssertJsonEqual(updated, payload.Value);
+        Assert.Equal(2, payload.Version);
+    }
+
+    // Case: PUT with malformed JSON body returns 400.
+    [Fact]
+    public async Task Put_WithMalformedJson_ReturnsBadRequest()
+    {
+        var key = CreateKey();
+        using var response = await PutRawAsync(key, "{ this is not json }");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    // Case: PUT with empty body stores null (API treats missing payload as null JSON).
+    [Fact]
+    public async Task Put_WithEmptyBody_CreatesNullValue()
+    {
+        var key = CreateKey();
+        using var response = await PutRawAsync(key, string.Empty);
+
+        var payload = await AssertSuccessAsync(response);
+        Assert.Null(payload.Value);
+        Assert.Equal(1, payload.Version);
+    }
+
+    // Case: PATCH upserts when key absent with version starting at 1.
+    [Fact]
+    public async Task Patch_CreateNewKeyWhenAbsent()
+    {
+        var key = CreateKey();
+        var delta = ParseJson("""{"rank":"gold"}""");
+
+        using var response = await PatchAsync(key, delta);
+        var payload = await AssertSuccessAsync(response);
+
+        Assert.Equal(1, payload.Version);
+        AssertJsonEqual(delta, payload.Value);
+    }
+
+    // Case: PATCH merge overwrites existing field values.
+    [Fact]
+    public async Task Patch_MergeOverwritesExistingFields()
+    {
+        var key = CreateKey();
+        var original = ParseJson("""{"name":"Ari","points":10}""");
+        var delta = ParseJson("""{"points":20}""");
+
+        using var putResponse = await PutAsync(key, original);
+        await AssertSuccessAsync(putResponse);
+
+        using var patchResponse = await PatchAsync(key, delta);
+        var payload = await AssertSuccessAsync(patchResponse);
+
+        var expected = ParseJson("""{"name":"Ari","points":20}""");
+        AssertJsonEqual(expected, payload.Value);
+        Assert.Equal(2, payload.Version);
+    }
+
+    // Case: Existing primitive plus object delta acts like replace.
+    [Fact]
+    public async Task Patch_WithExistingPrimitiveTreatsDeltaAsReplace()
+    {
+        var key = CreateKey();
+        var primitive = JsonValue.Create(42);
+        var deltaObject = ParseJson("""{"newField":1}""");
+
+        using var putResponse = await PutAsync(key, primitive);
+        await AssertSuccessAsync(putResponse);
+
+        using var patchResponse = await PatchAsync(key, deltaObject);
+        var payload = await AssertSuccessAsync(patchResponse);
+
+        AssertJsonEqual(deltaObject, payload.Value);
+        Assert.Equal(2, payload.Version);
+    }
+
+    // Case: Conditional PATCH succeeds with matching version guard.
+    [Fact]
+    public async Task Patch_ConditionalSuccessHonorsVersion()
+    {
+        var key = CreateKey();
+        using var putResponse = await PutAsync(key, ParseJson("""{"points":10}"""));
+        var initial = await AssertSuccessAsync(putResponse);
+
+        using var patchResponse = await PatchAsync(key, ParseJson("""{"rank":"gold"}"""), initial.Version);
+        var patched = await AssertSuccessAsync(patchResponse);
+
+        Assert.Equal(initial.Version + 1, patched.Version);
+        var expected = ParseJson("""{"points":10,"rank":"gold"}""");
+        AssertJsonEqual(expected, patched.Value);
+    }
+
+    // Case: PATCH with malformed JSON returns 400.
+    [Fact]
+    public async Task Patch_WithMalformedJsonReturnsBadRequest()
+    {
+        var key = CreateKey();
+        using var response = await PatchRawAsync(key, "{ invalid json");
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     // Case: Different keys can be mutated in parallel without interference.
@@ -400,6 +402,8 @@ public sealed class KVStoreApiE2eTestsPart1
         using var response = await PutAsync(key, ParseJson("""{"value":1}"""));
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
+
+    #endregion
 
     private async Task IncrementCounterAsync(string key, int increments)
     {

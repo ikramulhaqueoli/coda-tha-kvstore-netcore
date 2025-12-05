@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json.Nodes;
 using KvStore.Router.Clients;
 using KvStore.Router.Models;
@@ -12,8 +13,10 @@ public sealed class KeyValueForwardingService(
     public async Task<ForwardedKeyValueResult> GetAsync(string key, CancellationToken cancellationToken)
     {
         var node = partitioner.SelectNode(key);
+        var stopwatch = Stopwatch.StartNew();
         var record = await nodeClient.GetAsync(node, key, cancellationToken);
-        return new ForwardedKeyValueResult(record, node.Id);
+        stopwatch.Stop();
+        return new ForwardedKeyValueResult(record, node.Id, stopwatch.Elapsed);
     }
 
     public async Task<ForwardedKeyValueResult> PutAsync(
@@ -23,8 +26,10 @@ public sealed class KeyValueForwardingService(
         CancellationToken cancellationToken)
     {
         var node = partitioner.SelectNode(key);
+        var stopwatch = Stopwatch.StartNew();
         var record = await nodeClient.PutAsync(node, key, payload, expectedVersion, cancellationToken);
-        return new ForwardedKeyValueResult(record, node.Id);
+        stopwatch.Stop();
+        return new ForwardedKeyValueResult(record, node.Id, stopwatch.Elapsed);
     }
 
     public async Task<ForwardedKeyValueResult> PatchAsync(
@@ -34,8 +39,10 @@ public sealed class KeyValueForwardingService(
         CancellationToken cancellationToken)
     {
         var node = partitioner.SelectNode(key);
+        var stopwatch = Stopwatch.StartNew();
         var record = await nodeClient.PatchAsync(node, key, payload, expectedVersion, cancellationToken);
-        return new ForwardedKeyValueResult(record, node.Id);
+        stopwatch.Stop();
+        return new ForwardedKeyValueResult(record, node.Id, stopwatch.Elapsed);
     }
 }
 

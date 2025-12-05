@@ -167,7 +167,11 @@ public sealed class KeyValueController(
             result.Record.Key,
             result.Record.Value,
             result.Record.Version,
-            debug = new { node = result.NodeId }
+            debug = new
+            {
+                node = result.NodeId,
+                executionTimeMs = result.ExecutionTime.TotalMilliseconds
+            }
         };
     }
 }
