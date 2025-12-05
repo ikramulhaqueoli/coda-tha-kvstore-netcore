@@ -5,6 +5,7 @@ using KvStore.Core.Application.Queries.GetKeyValue;
 using KvStore.Core.Domain.Exceptions;
 using KvStore.Infrastructure.Concurrency;
 using KvStore.Infrastructure.Persistence;
+using KvStore.Tests.Logging;
 
 namespace KvStore.Tests.KeyValue;
 
@@ -12,15 +13,18 @@ public sealed class KeyValueCommandHandlerTests : IDisposable
 {
     private readonly InMemoryKeyValueRepository _repository = new();
     private readonly PerKeySemaphoreLockProvider _lockProvider = new();
+    private readonly TestLogger<PutKeyValueCommandHandler> _putLogger = new();
+    private readonly TestLogger<PatchKeyValueCommandHandler> _patchLogger = new();
+    private readonly TestLogger<GetKeyValueQueryHandler> _getLogger = new();
     private readonly PutKeyValueCommandHandler _putHandler;
     private readonly PatchKeyValueCommandHandler _patchHandler;
     private readonly GetKeyValueQueryHandler _getHandler;
 
     public KeyValueCommandHandlerTests()
     {
-        _putHandler = new PutKeyValueCommandHandler(_repository, _lockProvider);
-        _patchHandler = new PatchKeyValueCommandHandler(_repository, _lockProvider);
-        _getHandler = new GetKeyValueQueryHandler(_repository, _lockProvider);
+        _putHandler = new PutKeyValueCommandHandler(_repository, _lockProvider, _putLogger);
+        _patchHandler = new PatchKeyValueCommandHandler(_repository, _lockProvider, _patchLogger);
+        _getHandler = new GetKeyValueQueryHandler(_repository, _lockProvider, _getLogger);
     }
 
     public void Dispose()
@@ -83,6 +87,41 @@ public sealed class KeyValueCommandHandlerTests : IDisposable
     {
         await Assert.ThrowsAsync<KeyValueNotFoundException>(() =>
             _getHandler.Handle(new GetKeyValueQuery("missingKey"), CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Put_Handler_Logs_Request_And_Execution_Start()
+    {
+        const string key = "log-put";
+
+        await _putHandler.Handle(new PutKeyValueCommand(key, JsonValue.Create(37), null), CancellationToken.None);
+
+        Assert.Contains(_putLogger.Entries, entry => entry.Message.Contains($"Operation PUT on key {key} requested"));
+        Assert.Contains(_putLogger.Entries, entry => entry.Message.Contains($"Operation PUT on key {key} starting"));
+    }
+
+    [Fact]
+    public async Task Patch_Handler_Logs_Request_And_Execution_Start()
+    {
+        const string key = "log-patch";
+        var delta = JsonNode.Parse("""{"points":42}""");
+
+        await _patchHandler.Handle(new PatchKeyValueCommand(key, delta!, null), CancellationToken.None);
+
+        Assert.Contains(_patchLogger.Entries, entry => entry.Message.Contains($"Operation PATCH on key {key} requested"));
+        Assert.Contains(_patchLogger.Entries, entry => entry.Message.Contains($"Operation PATCH on key {key} starting"));
+    }
+
+    [Fact]
+    public async Task Get_Handler_Logs_Request_And_Execution_Start()
+    {
+        const string key = "log-get";
+
+        await _putHandler.Handle(new PutKeyValueCommand(key, JsonValue.Create(10), null), CancellationToken.None);
+        await _getHandler.Handle(new GetKeyValueQuery(key), CancellationToken.None);
+
+        Assert.Contains(_getLogger.Entries, entry => entry.Message.Contains($"Operation GET on key {key} requested"));
+        Assert.Contains(_getLogger.Entries, entry => entry.Message.Contains($"Operation GET on key {key} starting"));
     }
 
     [Fact]
