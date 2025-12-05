@@ -17,7 +17,7 @@ public sealed class PerKeySemaphoreLockProvider : IKeyLockProvider, IDisposable
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
         ArgumentNullException.ThrowIfNull(action);
 
-        var semaphore = _locks.GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
+        var semaphore = _locks.GetOrAdd(key, _ => new SemaphoreSlim(initialCount: 1, maxCount: 1));
         await semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {

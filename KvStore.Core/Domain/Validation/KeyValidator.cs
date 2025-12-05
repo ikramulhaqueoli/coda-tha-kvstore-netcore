@@ -16,8 +16,8 @@ public static class KeyValidator
             if ((c >= '0' && c <= '9') ||
                 (c >= 'A' && c <= 'Z') ||
                 (c >= 'a' && c <= 'z') ||
-                c is ':' or '-' or '_' or
-                '=' or '.' or '*' or ',')
+                c is ':' or '-' or '_' or '=' or 
+                '.' or '*' or ',' or '@' or '#')
             {
                 continue;
             }
