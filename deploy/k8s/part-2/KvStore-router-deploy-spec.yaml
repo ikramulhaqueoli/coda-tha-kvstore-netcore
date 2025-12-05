@@ -25,6 +25,16 @@ spec:
               value: "http://+:7001"
             - name: ASPNETCORE_ENVIRONMENT
               value: "Production"
+            - name: KvStoreApiNodes__Port
+              valueFrom:
+                configMapKeyRef:
+                  name: kvstore-router-config
+                  key: KvStoreApiNodes__Port
+            - name: KvStoreApiNodes__ReplicaCount
+              valueFrom:
+                configMapKeyRef:
+                  name: kvstore-router-config
+                  key: KvStoreApiNodes__ReplicaCount
           readinessProbe:
             httpGet:
               path: /health

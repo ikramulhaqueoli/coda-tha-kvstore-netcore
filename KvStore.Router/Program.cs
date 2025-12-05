@@ -5,6 +5,9 @@ using KvStore.Router.Partitioning;
 using KvStore.Router.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+var configuration = builder.Configuration;
+var environment = builder.Environment;
+const string KubernetesNodeOverridesSection = "KvStoreApiNodes";
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -15,7 +18,25 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();
 
-builder.Services.Configure<KvStoreNodesOptions>(builder.Configuration.GetSection(KvStoreNodesOptions.SectionName));
+builder.Services.Configure<KvStoreNodesOptions>(configuration.GetSection(KvStoreNodesOptions.SectionName));
+builder.Services.PostConfigure<KvStoreNodesOptions>(options =>
+{
+    var kubernetesOverrides = configuration.GetSection(KubernetesNodeOverridesSection);
+    if (!kubernetesOverrides.Exists())
+    {
+        return;
+    }
+
+    if (kubernetesOverrides.GetValue<int?>("Port") is { } port)
+    {
+        options.Port = port;
+    }
+
+    if (kubernetesOverrides.GetValue<int?>("ReplicaCount") is { } replicaCount)
+    {
+        options.ReplicaCount = replicaCount;
+    }
+});
 builder.Services.AddSingleton<INodeRegistry, NodeRegistry>();
 builder.Services.AddSingleton<IKeyPartitioner, ConsistentHashPartitioner>();
 builder.Services.AddSingleton<IKvStoreNodeClient, KvStoreNodeClient>();
