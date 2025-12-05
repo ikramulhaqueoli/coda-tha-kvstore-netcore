@@ -12,7 +12,7 @@ public sealed class KvStoreNodesOptions
     private const string DefaultClusterDomain = "svc.cluster.local";
 
     [Required]
-    public string ServiceName { get; init; } = string.Empty;
+    public string StatefulSetName { get; init; } = string.Empty;
 
     [Required]
     public string HeadlessServiceName { get; init; } = string.Empty;

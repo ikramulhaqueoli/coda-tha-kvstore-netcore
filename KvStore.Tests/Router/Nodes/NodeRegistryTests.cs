@@ -11,7 +11,7 @@ public sealed class NodeRegistryTests
     {
         var options = new KvStoreNodesOptions
         {
-            ServiceName = "kvstore-api",
+            StatefulSetName = "kvstore-api",
             HeadlessServiceName = "kvstore-api-headless",
             Namespace = "default",
             ClusterDomain = "svc.cluster.local",
@@ -41,7 +41,7 @@ public sealed class NodeRegistryTests
     {
         var options = new KvStoreNodesOptions
         {
-            ServiceName = "kvstore-api",
+            StatefulSetName = "kvstore-api",
             HeadlessServiceName = "localhost",
             Port = 7061,
             Scheme = "https",

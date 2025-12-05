@@ -29,9 +29,9 @@ public sealed class NodeRegistry : INodeRegistry
 
     private static void ValidateOptions(KvStoreNodesOptions options)
     {
-        if (string.IsNullOrWhiteSpace(options.ServiceName))
+        if (string.IsNullOrWhiteSpace(options.StatefulSetName))
         {
-            throw new ValidationException("ServiceName must be provided.");
+            throw new ValidationException("StatefulSetName must be provided.");
         }
 
         if (string.IsNullOrWhiteSpace(options.HeadlessServiceName))
@@ -53,8 +53,8 @@ public sealed class NodeRegistry : INodeRegistry
     private static NodeDefinition BuildNode(KvStoreNodesOptions options, int replicaIndex)
     {
         var scheme = string.IsNullOrWhiteSpace(options.Scheme) ? "http" : options.Scheme;
-        var serviceName = options.ServiceName.Trim();
-        var nodeId = $"{serviceName}-{replicaIndex}";
+        var statefulSetName = options.StatefulSetName.Trim();
+        var nodeId = $"{statefulSetName}-{replicaIndex}";
         var host = BuildHost(options, nodeId, replicaIndex);
         var baseAddress = new Uri($"{scheme}://{host}:{options.Port}/", UriKind.Absolute);
 
@@ -69,7 +69,8 @@ public sealed class NodeRegistry : INodeRegistry
 
         var host = template
             .Replace("{nodeId}", nodeId, StringComparison.Ordinal)
-            .Replace("{serviceName}", options.ServiceName, StringComparison.Ordinal)
+            .Replace("{statefulSetName}", options.StatefulSetName, StringComparison.Ordinal)
+            .Replace("{serviceName}", options.StatefulSetName, StringComparison.Ordinal)
             .Replace("{headlessServiceName}", options.HeadlessServiceName, StringComparison.Ordinal)
             .Replace("{namespace}", options.Namespace ?? string.Empty, StringComparison.Ordinal)
             .Replace("{clusterDomain}", options.ClusterDomain ?? string.Empty, StringComparison.Ordinal)
