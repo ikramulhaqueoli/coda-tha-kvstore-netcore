@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KvStore.Core", "KvStore.Cor
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KvStore.E2eTest", "KvStore.E2eTest\KvStore.E2eTest.csproj", "{D71FCA2D-CCE4-4688-8487-80F7E43ADC85}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KvStore.Tests", "KvStore.Tests\KvStore.Tests.csproj", "{CB9E1BE8-2448-4776-93FB-4E77414A74FE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KvStore.UnitTest", "KvStore.UnitTest\KvStore.UnitTest.csproj", "{CB9E1BE8-2448-4776-93FB-4E77414A74FE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KvStore.Infrastructure", "KvStore.Infrastructure\KvStore.Infrastructure.csproj", "{7F2D94C9-7213-4B00-8F84-B75E5F5313F6}"
 EndProject

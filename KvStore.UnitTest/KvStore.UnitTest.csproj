@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\KvStore.Api\KvStore.Api.csproj" />
     <ProjectReference Include="..\KvStore.Core\KvStore.Core.csproj" />
     <ProjectReference Include="..\KvStore.Infrastructure\KvStore.Infrastructure.csproj" />
     <ProjectReference Include="..\KvStore.Router\KvStore.Router.csproj" />
