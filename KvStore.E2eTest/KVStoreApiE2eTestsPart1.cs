@@ -311,9 +311,9 @@ public sealed class KVStoreApiE2eTestsPart1
         Assert.Equal(3, finalState.Version);
     }
 
-    // Case: CAS loops under concurrency avoid lost updates on single key.
+    // Case: Concurrent 3 Clients Increment Counters 100 Times and Gets final Version 301.
     [Fact]
-    public async Task ConcurrentClientsIncrementCountersWithoutLosingUpdates()
+    public async Task Concurrent3ClientsIncrementCounters100TimesAndGetsFinalVersion301()
     {
         var key = CreateKey();
         using var createResponse = await PutAsync(key, JsonValue.Create(0));
