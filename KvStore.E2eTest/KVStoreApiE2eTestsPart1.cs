@@ -19,7 +19,7 @@ public sealed class RemoteKvStoreClientFixture : IDisposable
     {
         Client = new HttpClient
         {
-            BaseAddress = new Uri("http://34.101.53.202:7000/"),
+            BaseAddress = new Uri("http://34.87.122.195:7000/"),
             Timeout = TimeSpan.FromSeconds(30)
         };
     }
