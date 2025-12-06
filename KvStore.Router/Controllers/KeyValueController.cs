@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -32,7 +33,7 @@ public sealed class KeyValueController(
         }
         catch (NodeHttpException ex)
         {
-            return CreateNodeErrorResult(ex);
+            return CreateNodeErrorResult(ex, false, new TimeSpan());
         }
         catch (NodeUnavailableException ex)
         {
@@ -48,17 +49,21 @@ public sealed class KeyValueController(
         CancellationToken cancellationToken,
         [FromQuery] bool debug = false)
     {
+        var stopwatch = Stopwatch.StartNew();
         try
         {
             var result = await forwardingService.GetAsync(key, cancellationToken);
+            stopwatch.Stop();
             return Ok(CreateResponse(result, debug));
         }
         catch (NodeHttpException ex)
         {
-            return CreateNodeErrorResult(ex);
+            stopwatch.Stop();
+            return CreateNodeErrorResult(ex, debug, stopwatch.Elapsed);
         }
         catch (NodeUnavailableException ex)
         {
+            stopwatch.Stop();
             return CreateNodeUnavailableResult(ex);
         }
     }
@@ -74,17 +79,21 @@ public sealed class KeyValueController(
         CancellationToken cancellationToken,
         [FromQuery] bool debug = false)
     {
+        var stopwatch = Stopwatch.StartNew();
         try
         {
             var result = await forwardingService.PutAsync(key, value, expectedVersion, cancellationToken);
+            stopwatch.Stop();
             return Ok(CreateResponse(result, debug));
         }
         catch (NodeHttpException ex)
         {
-            return CreateNodeErrorResult(ex);
+            stopwatch.Stop();
+            return CreateNodeErrorResult(ex, debug, stopwatch.Elapsed);
         }
         catch (NodeUnavailableException ex)
         {
+            stopwatch.Stop();
             return CreateNodeUnavailableResult(ex);
         }
     }
@@ -100,17 +109,21 @@ public sealed class KeyValueController(
         CancellationToken cancellationToken,
         [FromQuery] bool debug = false)
     {
+        var stopwatch = Stopwatch.StartNew();
         try
         {
             var result = await forwardingService.PatchAsync(key, delta, expectedVersion, cancellationToken);
+            stopwatch.Stop();
             return Ok(CreateResponse(result, debug));
         }
         catch (NodeHttpException ex)
         {
-            return CreateNodeErrorResult(ex);
+            stopwatch.Stop();
+            return CreateNodeErrorResult(ex, debug, stopwatch.Elapsed);
         }
         catch (NodeUnavailableException ex)
         {
+            stopwatch.Stop();
             return CreateNodeUnavailableResult(ex);
         }
     }
@@ -127,23 +140,73 @@ public sealed class KeyValueController(
         return builder.ToString();
     }
 
-    private ActionResult CreateNodeErrorResult(NodeHttpException exception)
+    private ActionResult CreateNodeErrorResult(NodeHttpException exception, bool debug, TimeSpan executionTime)
     {
         logger.LogWarning(
             "Node {NodeId} responded with status {StatusCode}",
             exception.Node.Id,
             (int)exception.StatusCode);
 
-        if (string.IsNullOrWhiteSpace(exception.ResponseBody))
+        if (!debug)
         {
-            return StatusCode((int)exception.StatusCode);
+            if (string.IsNullOrWhiteSpace(exception.ResponseBody))
+            {
+                return StatusCode((int)exception.StatusCode);
+            }
+
+            return new ContentResult
+            {
+                StatusCode = (int)exception.StatusCode,
+                ContentType = "application/json",
+                Content = exception.ResponseBody
+            };
         }
 
-        return new ContentResult
+        // When debug=true, include debug information in the response
+        var debugInfo = new
         {
-            StatusCode = (int)exception.StatusCode,
-            ContentType = "application/json",
-            Content = exception.ResponseBody
+            node = exception.Node.Id,
+            executionTimeMs = executionTime.TotalMilliseconds
+        };
+
+        if (string.IsNullOrWhiteSpace(exception.ResponseBody))
+        {
+            return new JsonResult(debugInfo)
+            {
+                StatusCode = (int)exception.StatusCode
+            };
+        }
+
+        // Try to parse the response body and merge with debug info
+        try
+        {
+            var responseJson = JsonNode.Parse(exception.ResponseBody);
+            if (responseJson is JsonObject responseObj)
+            {
+                responseObj["debug"] = JsonNode.Parse(JsonSerializer.Serialize(debugInfo))!;
+                return new ContentResult
+                {
+                    StatusCode = (int)exception.StatusCode,
+                    ContentType = "application/json",
+                    Content = responseObj.ToJsonString()
+                };
+            }
+        }
+        catch
+        {
+            // If parsing fails, return both as separate fields
+        }
+
+        // Fallback: return debug info with original response body
+        var combinedResponse = new
+        {
+            error = exception.ResponseBody,
+            debug = debugInfo
+        };
+
+        return new JsonResult(combinedResponse)
+        {
+            StatusCode = (int)exception.StatusCode
         };
     }
 

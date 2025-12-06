@@ -18,7 +18,7 @@ public sealed class QueryDispatcher(IServiceProvider serviceProvider) : IQueryDi
             throw new InvalidOperationException($"Handler type {handlerType.Name} does not implement HandleAsync method.");
         }
         
-        var result = method.Invoke(handler, new object[] { query, cancellationToken });
+        var result = method.Invoke(handler, [query, cancellationToken]);
         return (Task<TResult>)result!;
     }
 }

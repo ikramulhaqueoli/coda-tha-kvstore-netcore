@@ -16,13 +16,9 @@ public sealed class CommandDispatcher(IServiceProvider serviceProvider) : IComma
         var handlerType = typeof(ICommandHandler<,>).MakeGenericType(commandType, typeof(TResult));
         var handler = serviceProvider.GetRequiredService(handlerType);
         
-        var method = handlerType.GetMethod("HandleAsync", BindingFlags.Public | BindingFlags.Instance);
-        if (method == null)
-        {
-            throw new InvalidOperationException($"Handler type {handlerType.Name} does not implement HandleAsync method.");
-        }
-        
-        var result = method.Invoke(handler, new object[] { command, cancellationToken });
+        var method = handlerType.GetMethod("HandleAsync", BindingFlags.Public | BindingFlags.Instance)
+            ?? throw new InvalidOperationException($"Handler type {handlerType.Name} does not implement HandleAsync method.");
+        var result = method.Invoke(handler, [command, cancellationToken]);
         return (Task<TResult>)result!;
     }
 
@@ -36,10 +32,7 @@ public sealed class CommandDispatcher(IServiceProvider serviceProvider) : IComma
         }
 
         var validateMethod = validatorType.GetMethod("Validate", BindingFlags.Public | BindingFlags.Instance);
-        if (validateMethod != null)
-        {
-            validateMethod.Invoke(validator, new object[] { command });
-        }
+        validateMethod?.Invoke(validator, [command]);
     }
 }
 

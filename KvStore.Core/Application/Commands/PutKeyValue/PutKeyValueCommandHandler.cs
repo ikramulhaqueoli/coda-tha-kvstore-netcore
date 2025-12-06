@@ -1,5 +1,5 @@
 using KvStore.Core.Application.Abstractions;
-using KvStore.Core.Application.KeyValue.Responses;
+using KvStore.Core.Application.Commands.Responses;
 using KvStore.Core.Domain.Entities;
 using KvStore.Core.Domain.Exceptions;
 using KvStore.Core.Domain.Repositories;

@@ -3,7 +3,7 @@ using KvStore.Core.Application.Abstractions;
 using KvStore.Core.Application.Commands;
 using KvStore.Core.Application.Commands.PatchKeyValue;
 using KvStore.Core.Application.Commands.PutKeyValue;
-using KvStore.Core.Application.KeyValue.Responses;
+using KvStore.Core.Application.Commands.Responses;
 using KvStore.Core.Application.Queries;
 using KvStore.Core.Application.Queries.GetKeyValue;
 using KvStore.Core.Application.Queries.ListKeys;

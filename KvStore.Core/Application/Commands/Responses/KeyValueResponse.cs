@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
 using KvStore.Core.Domain.Entities;
 
-namespace KvStore.Core.Application.KeyValue.Responses;
+namespace KvStore.Core.Application.Commands.Responses;
 
 public sealed record KeyValueResponse(string Key, JsonNode? Value, int Version)
 {
