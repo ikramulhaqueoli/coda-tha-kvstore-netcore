@@ -1,3 +1,4 @@
+using System.Reflection;
 using KvStore.Core.Application.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -9,8 +10,16 @@ public sealed class QueryDispatcher(IServiceProvider serviceProvider) : IQueryDi
     {
         ArgumentNullException.ThrowIfNull(query);
         var handlerType = typeof(IQueryHandler<,>).MakeGenericType(query.GetType(), typeof(TResult));
-        dynamic handler = serviceProvider.GetRequiredService(handlerType);
-        return handler.HandleAsync((dynamic)query, cancellationToken);
+        var handler = serviceProvider.GetRequiredService(handlerType);
+        
+        var method = handlerType.GetMethod("HandleAsync", BindingFlags.Public | BindingFlags.Instance);
+        if (method == null)
+        {
+            throw new InvalidOperationException($"Handler type {handlerType.Name} does not implement HandleAsync method.");
+        }
+        
+        var result = method.Invoke(handler, new object[] { query, cancellationToken });
+        return (Task<TResult>)result!;
     }
 }
 

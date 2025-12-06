@@ -1,3 +1,4 @@
+using System.Reflection;
 using KvStore.Core.Application.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,8 +14,16 @@ public sealed class CommandDispatcher(IServiceProvider serviceProvider) : IComma
         InvokeValidator(commandType, command);
 
         var handlerType = typeof(ICommandHandler<,>).MakeGenericType(commandType, typeof(TResult));
-        dynamic handler = serviceProvider.GetRequiredService(handlerType);
-        return handler.HandleAsync((dynamic)command, cancellationToken);
+        var handler = serviceProvider.GetRequiredService(handlerType);
+        
+        var method = handlerType.GetMethod("HandleAsync", BindingFlags.Public | BindingFlags.Instance);
+        if (method == null)
+        {
+            throw new InvalidOperationException($"Handler type {handlerType.Name} does not implement HandleAsync method.");
+        }
+        
+        var result = method.Invoke(handler, new object[] { command, cancellationToken });
+        return (Task<TResult>)result!;
     }
 
     private void InvokeValidator(Type commandType, object command)
@@ -26,7 +35,11 @@ public sealed class CommandDispatcher(IServiceProvider serviceProvider) : IComma
             return;
         }
 
-        ((dynamic)validator).Validate((dynamic)command);
+        var validateMethod = validatorType.GetMethod("Validate", BindingFlags.Public | BindingFlags.Instance);
+        if (validateMethod != null)
+        {
+            validateMethod.Invoke(validator, new object[] { command });
+        }
     }
 }
 
