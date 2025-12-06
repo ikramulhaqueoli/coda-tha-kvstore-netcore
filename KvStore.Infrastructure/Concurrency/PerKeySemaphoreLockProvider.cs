@@ -26,12 +26,11 @@ public sealed class PerKeySemaphoreLockProvider(ILogger<PerKeySemaphoreLockProvi
         try
         {
             KeyValueOperationLogger.LogOperationStarting(logger, nameof(action), key);
-            var result = await action(cancellationToken).ConfigureAwait(false);
-            KeyValueOperationLogger.LogOperationCompleted(logger, nameof(action), key);
-            return result;
+            return await action(cancellationToken).ConfigureAwait(false);
         }
         finally
         {
+            KeyValueOperationLogger.LogOperationCompleted(logger, nameof(action), key);
             semaphore.Release();
         }
     }
