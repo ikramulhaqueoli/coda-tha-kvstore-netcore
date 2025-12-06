@@ -6,7 +6,7 @@ namespace KvStore.Core.Application.Queries.ListKeys;
 public sealed class ListKeysQueryHandler(IKeyValueRepository repository)
     : IQueryHandler<ListKeysQuery, IReadOnlyCollection<string>>
 {
-    public Task<IReadOnlyCollection<string>> Handle(ListKeysQuery query, CancellationToken cancellationToken)
+    public Task<IReadOnlyCollection<string>> HandleAsync(ListKeysQuery query, CancellationToken cancellationToken)
         => repository.ListKeysAsync(cancellationToken);
 }
 

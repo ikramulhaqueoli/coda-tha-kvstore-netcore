@@ -2,6 +2,6 @@ namespace KvStore.Core.Application.Abstractions;
 
 public interface IQueryHandler<TQuery, TResult> where TQuery : IQuery<TResult>
 {
-    Task<TResult> Handle(TQuery query, CancellationToken cancellationToken);
+    Task<TResult> HandleAsync(TQuery query, CancellationToken cancellationToken);
 }
 
