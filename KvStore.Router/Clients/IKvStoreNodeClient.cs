@@ -6,7 +6,10 @@ namespace KvStore.Router.Clients;
 
 public interface IKvStoreNodeClient
 {
-    Task<KeyValueRecord> GetAsync(NodeDefinition node, string key, CancellationToken cancellationToken);
+    Task<KeyValueRecord> GetAsync(
+        NodeDefinition node,
+        string key,
+        CancellationToken cancellationToken);
 
     Task<KeyValueRecord> PutAsync(
         NodeDefinition node,
@@ -22,6 +25,8 @@ public interface IKvStoreNodeClient
         int? expectedVersion,
         CancellationToken cancellationToken);
 
-    Task<IReadOnlyCollection<string>> ListKeysAsync(NodeDefinition node, CancellationToken cancellationToken);
+    Task<IReadOnlyCollection<string>> ListKeysAsync(
+        NodeDefinition node,
+        CancellationToken cancellationToken);
 }
 
