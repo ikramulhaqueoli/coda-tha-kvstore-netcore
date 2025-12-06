@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace KvStore.Router.Controllers;
 
 [ApiController]
-[Route("gateway/kv")]
+[Route("router/kv")]
 public sealed class KeyValueController(
     IKeyValueForwardingService forwardingService,
     IKeyListingService listingService,

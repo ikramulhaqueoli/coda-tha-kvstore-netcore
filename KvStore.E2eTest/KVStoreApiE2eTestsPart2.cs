@@ -183,13 +183,13 @@ public sealed class KVStoreApiE2eTestsPart2
 
     private Task<HttpResponseMessage> GetAsync(string key)
     {
-        var uri = $"gateway/kv/{Uri.EscapeDataString(key)}";
+        var uri = $"router/kv/{Uri.EscapeDataString(key)}";
         return _client.GetAsync(uri);
     }
 
     private async Task<IReadOnlyList<KeyListingRecord>> ListKeysAsync()
     {
-        using var response = await _client.GetAsync("gateway/kv");
+        using var response = await _client.GetAsync("router/kv");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         var payload = await response.Content.ReadAsStringAsync();
@@ -243,7 +243,7 @@ public sealed class KVStoreApiE2eTestsPart2
     private static string BuildUri(string key, int? ifVersion, bool debug)
     {
         var encodedKey = Uri.EscapeDataString(key);
-        var path = $"gateway/kv/{encodedKey}";
+        var path = $"router/kv/{encodedKey}";
         var query = new List<string>();
 
         if (ifVersion.HasValue)
