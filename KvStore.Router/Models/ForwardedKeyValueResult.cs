@@ -1,5 +1,3 @@
-using System;
-
 namespace KvStore.Router.Models;
 
 public sealed record ForwardedKeyValueResult(
