@@ -10,7 +10,7 @@ public sealed class QueryDispatcher(IServiceProvider serviceProvider) : IQueryDi
         ArgumentNullException.ThrowIfNull(query);
         var handlerType = typeof(IQueryHandler<,>).MakeGenericType(query.GetType(), typeof(TResult));
         dynamic handler = serviceProvider.GetRequiredService(handlerType);
-        return handler.Handle((dynamic)query, cancellationToken);
+        return handler.HandleAsync((dynamic)query, cancellationToken);
     }
 }
 

@@ -14,7 +14,7 @@ public sealed class CommandDispatcher(IServiceProvider serviceProvider) : IComma
 
         var handlerType = typeof(ICommandHandler<,>).MakeGenericType(commandType, typeof(TResult));
         dynamic handler = serviceProvider.GetRequiredService(handlerType);
-        return handler.Handle((dynamic)command, cancellationToken);
+        return handler.HandleAsync((dynamic)command, cancellationToken);
     }
 
     private void InvokeValidator(Type commandType, object command)
