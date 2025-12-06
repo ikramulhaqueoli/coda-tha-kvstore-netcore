@@ -16,10 +16,10 @@ public sealed class GetKeyValueQueryHandler(
         KeyValidator.EnsureValid(query.Key);
 
         return keyLockProvider.ExecuteWithLockAsync(query.Key, async token =>
-            await GetKeyValueAggregateAsync(query, token), cancellationToken);
+            await HandleGetKeyValueAggregateAsync(query, token), cancellationToken);
     }
 
-    private async Task<KeyValueResponse> GetKeyValueAggregateAsync(GetKeyValueQuery query, CancellationToken token)
+    private async Task<KeyValueResponse> HandleGetKeyValueAggregateAsync(GetKeyValueQuery query, CancellationToken token)
     {
         var aggregate = await repository.GetAsync(query.Key, token);
 

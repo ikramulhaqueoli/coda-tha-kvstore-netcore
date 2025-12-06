@@ -14,11 +14,11 @@ public sealed class PutKeyValueCommandHandler(
     {
         return keyLockProvider.ExecuteWithLockAsync(
             command.Key,
-            async token => await PutAggregateAsync(command, token),
+            async token => await HandlePutAggregateAsync(command, token),
             cancellationToken);
     }
 
-    private async Task<KeyValueResponse> PutAggregateAsync(PutKeyValueCommand command, CancellationToken token)
+    private async Task<KeyValueResponse> HandlePutAggregateAsync(PutKeyValueCommand command, CancellationToken token)
     {
         var aggregate = await repository.GetAsync(command.Key, token);
 

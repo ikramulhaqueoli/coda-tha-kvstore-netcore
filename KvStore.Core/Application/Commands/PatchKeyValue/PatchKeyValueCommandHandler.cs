@@ -14,11 +14,11 @@ public sealed class PatchKeyValueCommandHandler(
     {
         return keyLockProvider.ExecuteWithLockAsync(
             command.Key,
-            async token => await PatchAggregateAsync(command, token),
+            async token => await HandlePatchAggregateAsync(command, token),
             cancellationToken);
     }
 
-    private async Task<KeyValueResponse> PatchAggregateAsync(PatchKeyValueCommand command, CancellationToken token)
+    private async Task<KeyValueResponse> HandlePatchAggregateAsync(PatchKeyValueCommand command, CancellationToken token)
     {
         var aggregate = await repository.GetAsync(command.Key, token);
 
