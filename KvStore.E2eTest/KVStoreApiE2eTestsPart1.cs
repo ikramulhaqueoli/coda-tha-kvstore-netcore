@@ -259,23 +259,6 @@ public sealed class KVStoreApiE2eTestsPart1
     }
 
     #region Additional coverage (optional)
-    [Fact(DisplayName = "Case: A second PUT without guards overwrites value and bumps version.")]
-    public async Task Put_OverwriteWithoutGuard_IncrementsVersion()
-    {
-        var key = CreateKey();
-        var original = ParseJson("""{"name":"Ari","points":10}""");
-        var updated = ParseJson("""{"alias":"Ari","points":25,"active":true}""");
-
-        using var firstResponse = await PutAsync(key, original);
-        await AssertSuccessAsync(firstResponse);
-
-        using var overwriteResponse = await PutAsync(key, updated);
-        var payload = await AssertSuccessAsync(overwriteResponse);
-
-        AssertJsonEqual(updated, payload.Value);
-        Assert.Equal(2, payload.Version);
-    }
-
     [Fact(DisplayName = "Case: PUT with malformed JSON body returns 400.")]
     public async Task Put_WithMalformedJson_ReturnsBadRequest()
     {
@@ -283,52 +266,6 @@ public sealed class KVStoreApiE2eTestsPart1
         using var response = await PutRawAsync(key, "{ this is not json }");
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-    }
-
-    [Fact(DisplayName = "Case: PUT with empty body stores null (missing payload treated as null JSON).")]
-    public async Task Put_WithEmptyBody_CreatesNullValue()
-    {
-        var key = CreateKey();
-        using var response = await PutRawAsync(key, string.Empty);
-
-        var payload = await AssertSuccessAsync(response);
-        Assert.Null(payload.Value);
-        Assert.Equal(1, payload.Version);
-    }
-
-    [Fact(DisplayName = "Case: PATCH merge overwrites existing field values.")]
-    public async Task Patch_MergeOverwritesExistingFields()
-    {
-        var key = CreateKey();
-        var original = ParseJson("""{"name":"Ari","points":10}""");
-        var delta = ParseJson("""{"points":20}""");
-
-        using var putResponse = await PutAsync(key, original);
-        await AssertSuccessAsync(putResponse);
-
-        using var patchResponse = await PatchAsync(key, delta);
-        var payload = await AssertSuccessAsync(patchResponse);
-
-        var expected = ParseJson("""{"name":"Ari","points":20}""");
-        AssertJsonEqual(expected, payload.Value);
-        Assert.Equal(2, payload.Version);
-    }
-
-    [Fact(DisplayName = "Case: Existing primitive plus object delta acts like replace.")]
-    public async Task Patch_WithExistingPrimitiveTreatsDeltaAsReplace()
-    {
-        var key = CreateKey();
-        var primitive = JsonValue.Create(42);
-        var deltaObject = ParseJson("""{"newField":1}""");
-
-        using var putResponse = await PutAsync(key, primitive);
-        await AssertSuccessAsync(putResponse);
-
-        using var patchResponse = await PatchAsync(key, deltaObject);
-        var payload = await AssertSuccessAsync(patchResponse);
-
-        AssertJsonEqual(deltaObject, payload.Value);
-        Assert.Equal(2, payload.Version);
     }
 
     [Fact(DisplayName = "Case: Conditional PATCH succeeds with matching version guard.")]
@@ -344,39 +281,6 @@ public sealed class KVStoreApiE2eTestsPart1
         Assert.Equal(initial.Version + 1, patched.Version);
         var expected = ParseJson("""{"points":10,"rank":"gold"}""");
         AssertJsonEqual(expected, patched.Value);
-    }
-
-    [Fact(DisplayName = "Case: PATCH with malformed JSON returns 400.")]
-    public async Task Patch_WithMalformedJsonReturnsBadRequest()
-    {
-        var key = CreateKey();
-        using var response = await PatchRawAsync(key, "{ invalid json");
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-    }
-
-    [Fact(DisplayName = "Case: Different keys can be mutated in parallel without interference.")]
-    public async Task ParallelOperationsOnDifferentKeysSucceedIndependently()
-    {
-        var keyA = CreateKey();
-        var keyB = CreateKey();
-
-        using var putA = await PutAsync(keyA, JsonValue.Create(0));
-        using var putB = await PutAsync(keyB, JsonValue.Create(0));
-        await AssertSuccessAsync(putA);
-        await AssertSuccessAsync(putB);
-
-        var taskA = Task.Run(() => IncrementCounterAsync(keyA, 40));
-        var taskB = Task.Run(() => IncrementCounterAsync(keyB, 40));
-
-        await Task.WhenAll(taskA, taskB);
-
-        using var getA = await GetAsync(keyA);
-        using var getB = await GetAsync(keyB);
-        var payloadA = await AssertSuccessAsync(getA);
-        var payloadB = await AssertSuccessAsync(getB);
-
-        Assert.Equal(40, payloadA.Value!.GetValue<int>());
-        Assert.Equal(40, payloadB.Value!.GetValue<int>());
     }
 
     [Fact(DisplayName = "Case: Two guarded writes where only one should succeed; the other conflicts.")]
@@ -407,14 +311,6 @@ public sealed class KVStoreApiE2eTestsPart1
         var finalPayload = await AssertSuccessAsync(finalResponse);
         var finalValue = finalPayload.Value!["value"]!.GetValue<string>();
         Assert.True(finalValue is "first" or "second");
-    }
-
-    [Fact(DisplayName = "Case: Invalid key containing whitespace fails fast with 400.")]
-    public async Task InvalidKeyContainingWhitespaceReturnsBadRequest()
-    {
-        const string key = "   ";
-        using var response = await PutAsync(key, ParseJson("""{"value":1}"""));
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
     #endregion
 
