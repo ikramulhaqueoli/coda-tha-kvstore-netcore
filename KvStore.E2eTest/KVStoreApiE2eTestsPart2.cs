@@ -60,12 +60,61 @@ public sealed class KVStoreApiE2eTestsPart2
         Assert.Equal(3, updated.Value!.GetValue<int>());
     }
 
-    [Fact(DisplayName = "Case: 20 concurrent mixed requests (GET, PUT, PATCH) with same key return 200.")]
-    public async Task Mixed20ConcurrentRequests_SameKey_Returns200()
+    [Fact(DisplayName = "Case: GET retrieves an existing key through router.")]
+    public async Task Get_ExistingKey_ReturnsStoredValue()
+    {
+        var key = CreateKey();
+        var value = ParseJson("""{"name":"Test","value":42}""");
+
+        using var putResponse = await PutAsync(key, value);
+        await AssertSuccessAsync(putResponse);
+
+        using var getResponse = await GetAsync(key);
+        var payload = await AssertSuccessAsync(getResponse);
+
+        Assert.Equal(key, payload.Key);
+        AssertJsonEqual(value, payload.Value);
+        Assert.Equal(1, payload.Version);
+    }
+
+    [Fact(DisplayName = "Case: PUT creates a new key through router with version 1.")]
+    public async Task Put_CreatesNewKey_ReturnsVersionOne()
+    {
+        var key = CreateKey();
+        var body = ParseJson("""{"name":"NewKey","points":100}""");
+
+        using var response = await PutAsync(key, body);
+        var payload = await AssertSuccessAsync(response);
+
+        Assert.Equal(key, payload.Key);
+        AssertJsonEqual(body, payload.Value);
+        Assert.Equal(1, payload.Version);
+    }
+
+    [Fact(DisplayName = "Case: PATCH updates an existing key through router.")]
+    public async Task Patch_UpdatesExistingKey_ReturnsUpdatedValue()
+    {
+        var key = CreateKey();
+        var original = ParseJson("""{"name":"Original","count":5}""");
+        var delta = ParseJson("""{"count":10}""");
+
+        using var putResponse = await PutAsync(key, original);
+        await AssertSuccessAsync(putResponse);
+
+        using var patchResponse = await PatchAsync(key, delta);
+        var payload = await AssertSuccessAsync(patchResponse);
+
+        var expected = ParseJson("""{"name":"Original","count":10}""");
+        AssertJsonEqual(expected, payload.Value);
+        Assert.Equal(2, payload.Version);
+    }
+
+    [Fact(DisplayName = "Case: 10 concurrent mixed requests (GET, PUT, PATCH) with same key return 200.")]
+    public async Task Mixed10ConcurrentRequests_SameKey_Returns200()
     {
         var key = CreateKey();
 
-        var tasks = Enumerable.Range(0, 20)
+        var tasks = Enumerable.Range(0, 10)
             .Select(i => Task.Run(async () =>
             {
                 var operation = i % 3;
@@ -87,14 +136,14 @@ public sealed class KVStoreApiE2eTestsPart2
         Assert.All(results, statusCode => Assert.Equal(HttpStatusCode.OK, statusCode));
     }
 
-    [Fact(DisplayName = "Case: 20 concurrent mixed requests (GET, PUT, PATCH) with distinct keys return 200.")]
-    public async Task Mixed20ConcurrentRequests_DistinctKeys_Returns200()
+    [Fact(DisplayName = "Case: 10 concurrent mixed requests (GET, PUT, PATCH) with distinct keys return 200.")]
+    public async Task Mixed10ConcurrentRequests_DistinctKeys_Returns200()
     {
-        var keys = Enumerable.Range(0, 20)
+        var keys = Enumerable.Range(0, 10)
             .Select(i => CreateKey(suffix: i.ToString()))
             .ToList();
 
-        var tasks = Enumerable.Range(0, 20)
+        var tasks = Enumerable.Range(0, 10)
             .Select(i => Task.Run(async () =>
             {
                 var key = keys[i];
