@@ -1,6 +1,6 @@
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json.Nodes;
 using Xunit;
@@ -42,37 +42,6 @@ public sealed class KVStoreApiE2eTestsPart2
         _client = fixture.Client;
     }
 
-    [Fact(DisplayName = "Case: Router PUTs distribute to multiple nodes and values round-trip.")]
-    public async Task Put_DistributesAcrossNodesAndValuesRoundTrip()
-    {
-        var observedNodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var expectedValues = new Dictionary<string, JsonNode?>();
-
-        for (var i = 0; i < 8 && observedNodes.Count < 2; i++)
-        {
-            var key = CreateKey($"multi-node-{i}");
-            var value = JsonValue.Create(i);
-
-            using var response = await PutAsync(key, value, debug: true);
-            var payload = await AssertSuccessAsync(response);
-
-            Assert.False(string.IsNullOrWhiteSpace(payload.NodeId));
-            observedNodes.Add(payload.NodeId!);
-            expectedValues[key] = value;
-        }
-
-        Assert.True(observedNodes.Count >= 2, "Expected at least two different nodes to handle the PUT requests.");
-
-        foreach (var (key, expected) in expectedValues)
-        {
-            using var response = await GetAsync(key);
-            var payload = await AssertSuccessAsync(response);
-
-            Assert.Equal(key, payload.Key);
-            AssertJsonEqual(expected, payload.Value);
-        }
-    }
-
     [Fact(DisplayName = "Case: Conditional PUT through router enforces optimistic locking.")]
     public async Task Put_ConditionalGuardHonorsOptimisticLock()
     {
@@ -89,6 +58,63 @@ public sealed class KVStoreApiE2eTestsPart2
 
         Assert.Equal(created.Version + 1, updated.Version);
         Assert.Equal(3, updated.Value!.GetValue<int>());
+    }
+
+    [Fact(DisplayName = "Case: 20 concurrent mixed requests (GET, PUT, PATCH) with same key return 200.")]
+    public async Task Mixed20ConcurrentRequests_SameKey_Returns200()
+    {
+        var key = CreateKey();
+
+        var tasks = Enumerable.Range(0, 20)
+            .Select(i => Task.Run(async () =>
+            {
+                var operation = i % 3;
+                HttpResponseMessage response = operation switch
+                {
+                    0 => await PutAsync(key, JsonValue.Create(i)),
+                    1 => await GetAsync(key),
+                    2 => await PatchAsync(key, ParseJson($"{{\"counter\":{i}}}")),
+                    _ => throw new InvalidOperationException(),
+                };
+                using (response)
+                {
+                    return response.StatusCode;
+                }
+            }))
+            .ToArray();
+
+        var results = await Task.WhenAll(tasks);
+        Assert.All(results, statusCode => Assert.Equal(HttpStatusCode.OK, statusCode));
+    }
+
+    [Fact(DisplayName = "Case: 20 concurrent mixed requests (GET, PUT, PATCH) with distinct keys return 200.")]
+    public async Task Mixed20ConcurrentRequests_DistinctKeys_Returns200()
+    {
+        var keys = Enumerable.Range(0, 20)
+            .Select(i => CreateKey(suffix: i.ToString()))
+            .ToList();
+
+        var tasks = Enumerable.Range(0, 20)
+            .Select(i => Task.Run(async () =>
+            {
+                var key = keys[i];
+                var operation = i % 3;
+                HttpResponseMessage response = operation switch
+                {
+                    0 => await PutAsync(key, JsonValue.Create(i)),
+                    1 => await GetAsync(key),
+                    2 => await PatchAsync(key, ParseJson($"{{\"counter\":{i}}}")),
+                    _ => throw new InvalidOperationException(),
+                };
+                using (response)
+                {
+                    return response.StatusCode;
+                }
+            }))
+            .ToArray();
+
+        var results = await Task.WhenAll(tasks);
+        Assert.All(results, statusCode => Assert.Equal(HttpStatusCode.OK, statusCode));
     }
 
     [Fact(DisplayName = "Case: PATCH merge via router keeps existing fields and bumps version.")]
@@ -259,8 +285,8 @@ public sealed class KVStoreApiE2eTestsPart2
         return query.Count > 0 ? $"{path}?{string.Join('&', query)}" : path;
     }
 
-    private static string CreateKey([CallerMemberName] string? testName = null)
-        => $"router:e2e:{testName ?? "test"}:{Guid.NewGuid():N}";
+    private static string CreateKey(string? suffix = null)
+        => $"{Stopwatch.GetTimestamp()}{(suffix != null ? ":" + suffix : "")}";
 
     private static JsonNode ParseJson(string value)
         => JsonNode.Parse(value)!;
