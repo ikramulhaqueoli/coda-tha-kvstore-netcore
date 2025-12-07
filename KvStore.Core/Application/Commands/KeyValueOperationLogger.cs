@@ -5,6 +5,13 @@ namespace KvStore.Core.Application.Commands;
 
 public static class KeyValueOperationLogger
 {
+    private static long GetTimestampMs()
+    {
+        var timestamp = Stopwatch.GetTimestamp();
+        var milliseconds = (timestamp * 1_000L) / Stopwatch.Frequency;
+        return milliseconds;
+    }
+
     private static string GetActionMethod(Type? declaringType)
     {
         var upperDeclaringTypeFullName = declaringType?.FullName?.ToUpperInvariant() ?? String.Empty;
@@ -31,7 +38,7 @@ public static class KeyValueOperationLogger
             action.GetHashCode(),
             GetActionMethod(action.Method.DeclaringType),
             key,
-            Stopwatch.GetTimestamp());
+            GetTimestampMs());
     }
 
     public static void LogOperationStarting<T, TResult>(ILogger<T> logger, Func<CancellationToken, Task<TResult>> action, string key)
@@ -41,7 +48,7 @@ public static class KeyValueOperationLogger
             action.GetHashCode(),
             GetActionMethod(action.Method.DeclaringType),
             key,
-            Stopwatch.GetTimestamp());
+            GetTimestampMs());
     }
 
     public static void LogOperationCompleted<T, TResult>(ILogger<T> logger, Func<CancellationToken, Task<TResult>> action, string key)
@@ -51,6 +58,6 @@ public static class KeyValueOperationLogger
             action.GetHashCode(),
             GetActionMethod(action.Method.DeclaringType),
             key,
-            Stopwatch.GetTimestamp());
+            GetTimestampMs());
     }
 }
