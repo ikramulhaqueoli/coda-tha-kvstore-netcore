@@ -27,7 +27,7 @@ public static class KeyValueOperationLogger
     public static void LogOperationRequested<T, TResult>(ILogger<T> logger, Func<CancellationToken, Task<TResult>> action, string key)
     {
         logger.LogInformation(
-            "Action Hash {}: {Method} Request on key {Key} requested at Timestamp {RequestedAt}",
+            "Action #{}: {Method} Request on key {Key} requested at Timestamp {RequestedAt}",
             action.GetHashCode(),
             GetActionMethod(action.Method.DeclaringType),
             key,
@@ -37,7 +37,7 @@ public static class KeyValueOperationLogger
     public static void LogOperationStarting<T, TResult>(ILogger<T> logger, Func<CancellationToken, Task<TResult>> action, string key)
     {
         logger.LogInformation(
-            "Action Hash {}: {Method} Request on key {Key} starting at Timestamp {ExecutionStart}",
+            "Action #{}: {Method} Request on key {Key} starting at Timestamp {ExecutionStart}",
             action.GetHashCode(),
             GetActionMethod(action.Method.DeclaringType),
             key,
@@ -47,7 +47,7 @@ public static class KeyValueOperationLogger
     public static void LogOperationCompleted<T, TResult>(ILogger<T> logger, Func<CancellationToken, Task<TResult>> action, string key)
     {
         logger.LogInformation(
-            "Action Hash {}: {Method} Request on key {Key} completed at Timestamp {CompletedAt}",
+            "Action #{}: {Method} Request on key {Key} completed at Timestamp {CompletedAt}",
             action.GetHashCode(),
             GetActionMethod(action.Method.DeclaringType),
             key,
