@@ -6,5 +6,5 @@ metadata:
     app: kvstore-router
 data:
   KvStoreApiNodes__Port: "7000"
-  KvStoreApiNodes__ReplicaCount: "4"
+  KvStoreApiNodes__ReplicaCount: "3"
 

@@ -42,6 +42,45 @@ public sealed class KVStoreApiE2eTestsPart1
         _client = fixture.Client;
     }
 
+    [Fact(DisplayName = "Case: Concurrent 3 clients increment counters 100 times and count reaches 300.")]
+    public async Task Concurrent3ClientsIncrementCounters100TimesAndGetsFinalCount300()
+    {
+        var key = CreateKey();
+        using var createResponse = await PutAsync(key, JsonValue.Create(0));
+        await AssertSuccessAsync(createResponse);
+
+        const int clients = 3;
+        const int incrementsPerClient = 100;
+
+        var tasks = Enumerable.Range(0, clients)
+            .Select(_ => Task.Run(() => IncrementCounterAsync(key, incrementsPerClient)))
+            .ToArray();
+
+        await Task.WhenAll(tasks);
+
+        using var finalResponse = await GetAsync(key);
+        var finalPayload = await AssertSuccessAsync(finalResponse);
+
+        Assert.Equal(clients * incrementsPerClient, finalPayload.Value!.GetValue<int>());
+        Assert.Equal(1 + clients * incrementsPerClient, finalPayload.Version);
+    }
+
+    [Fact(DisplayName = "Case: GET retrieves an existing key with stored payload.")]
+    public async Task Get_ExistingKey_ReturnsStoredValue()
+    {
+        var key = CreateKey();
+        var value = ParseJson("""{"name":"Ari","points":10}""");
+
+        using var putResponse = await PutAsync(key, value);
+        await AssertSuccessAsync(putResponse);
+
+        using var getResponse = await GetAsync(key);
+        var payload = await AssertSuccessAsync(getResponse);
+
+        Assert.Equal(key, payload.Key);
+        AssertJsonEqual(value, payload.Value);
+    }
+
     [Fact(DisplayName = "Case: Plain PUT creates a brand-new key with version 1.")]
     public async Task Put_CreatesNewKey_ReturnsVersionOne()
     {
@@ -54,6 +93,61 @@ public sealed class KVStoreApiE2eTestsPart1
         Assert.Equal(key, payload.Key);
         AssertJsonEqual(body, payload.Value);
         Assert.Equal(1, payload.Version);
+    }
+
+    [Fact(DisplayName = "Case: PATCH upserts when key absent with version starting at 1.")]
+    public async Task Patch_CreateNewKeyWhenAbsent()
+    {
+        var key = CreateKey();
+        var delta = ParseJson("""{"rank":"gold"}""");
+
+        using var response = await PatchAsync(key, delta);
+        var payload = await AssertSuccessAsync(response);
+
+        Assert.Equal(1, payload.Version);
+        AssertJsonEqual(delta, payload.Value);
+    }
+
+    [Fact(DisplayName = "Case: 100 concurrent PUT requests with same key.")]
+    public async Task Concurrent100Requests_SameKey()
+    {
+        var key = Guid.NewGuid().ToString("N");
+
+        var tasks = Enumerable.Range(0, 100)
+            .Select(_ => Task.Run(async () =>
+            {
+                using var response = await PutAsync(key, JsonValue.Create(0));
+                return response.StatusCode;
+            }))
+            .ToArray();
+
+        var results = await Task.WhenAll(tasks);
+        Assert.All(results, statusCode => Assert.Equal(HttpStatusCode.OK, statusCode));
+    }
+
+    [Fact(DisplayName = "Case: 100 concurrent PUT requests with distinct keys.")]
+    public async Task Concurrent100Requests_DistinctKeys()
+    {
+        var keys = Enumerable.Range(0, 100)
+            .Select(_ => Guid.NewGuid().ToString("N"))
+            .ToList();
+
+        var tasks = keys.Select(key => Task.Run(async () =>
+        {
+            using var response = await PutAsync(key, JsonValue.Create(0));
+            return response.StatusCode;
+        }))
+            .ToArray();
+
+        var results = await Task.WhenAll(tasks);
+        Assert.All(results, statusCode => Assert.Equal(HttpStatusCode.OK, statusCode));
+    }
+
+    [Fact(DisplayName = "Case: GET against unknown key returns 404.")]
+    public async Task Get_MissingKey_ReturnsNotFound()
+    {
+        using var response = await GetAsync($"missing-{Guid.NewGuid():N}");
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact(DisplayName = "Case: Conditional PUT succeeds when ifVersion matches current version.")]
@@ -86,29 +180,6 @@ public sealed class KVStoreApiE2eTestsPart1
 
         Assert.Equal(initialPayload.Version, current.Version);
         Assert.Equal(1, current.Value!.GetValue<int>());
-    }
-
-    [Fact(DisplayName = "Case: GET retrieves an existing key with stored payload.")]
-    public async Task Get_ExistingKey_ReturnsStoredValue()
-    {
-        var key = CreateKey();
-        var value = ParseJson("""{"name":"Ari","points":10}""");
-
-        using var putResponse = await PutAsync(key, value);
-        await AssertSuccessAsync(putResponse);
-
-        using var getResponse = await GetAsync(key);
-        var payload = await AssertSuccessAsync(getResponse);
-
-        Assert.Equal(key, payload.Key);
-        AssertJsonEqual(value, payload.Value);
-    }
-
-    [Fact(DisplayName = "Case: GET against unknown key returns 404.")]
-    public async Task Get_MissingKey_ReturnsNotFound()
-    {
-        using var response = await GetAsync($"missing-{Guid.NewGuid():N}");
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact(DisplayName = "Case: PATCH merges JSON objects shallowly, preserving prior fields.")]
@@ -186,31 +257,7 @@ public sealed class KVStoreApiE2eTestsPart1
         Assert.Equal(3, finalState.Version);
     }
 
-    [Fact(DisplayName = "Case: Concurrent 3 clients increment counters 100 times and count reaches 300.")]
-    public async Task Concurrent3ClientsIncrementCounters100TimesAndGetsFinalCount300()
-    {
-        var key = CreateKey();
-        using var createResponse = await PutAsync(key, JsonValue.Create(0));
-        await AssertSuccessAsync(createResponse);
-
-        const int clients = 3;
-        const int incrementsPerClient = 100;
-
-        var tasks = Enumerable.Range(0, clients)
-            .Select(_ => Task.Run(() => IncrementCounterAsync(key, incrementsPerClient)))
-            .ToArray();
-
-        await Task.WhenAll(tasks);
-
-        using var finalResponse = await GetAsync(key);
-        var finalPayload = await AssertSuccessAsync(finalResponse);
-
-        Assert.Equal(clients * incrementsPerClient, finalPayload.Value!.GetValue<int>());
-        Assert.Equal(1 + clients * incrementsPerClient, finalPayload.Version);
-    }
-
     #region Additional coverage (optional)
-
     [Fact(DisplayName = "Case: A second PUT without guards overwrites value and bumps version.")]
     public async Task Put_OverwriteWithoutGuard_IncrementsVersion()
     {
@@ -246,19 +293,6 @@ public sealed class KVStoreApiE2eTestsPart1
         var payload = await AssertSuccessAsync(response);
         Assert.Null(payload.Value);
         Assert.Equal(1, payload.Version);
-    }
-
-    [Fact(DisplayName = "Case: PATCH upserts when key absent with version starting at 1.")]
-    public async Task Patch_CreateNewKeyWhenAbsent()
-    {
-        var key = CreateKey();
-        var delta = ParseJson("""{"rank":"gold"}""");
-
-        using var response = await PatchAsync(key, delta);
-        var payload = await AssertSuccessAsync(response);
-
-        Assert.Equal(1, payload.Version);
-        AssertJsonEqual(delta, payload.Value);
     }
 
     [Fact(DisplayName = "Case: PATCH merge overwrites existing field values.")]
@@ -381,49 +415,6 @@ public sealed class KVStoreApiE2eTestsPart1
         using var response = await PutAsync(key, ParseJson("""{"value":1}"""));
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
-
-    [Fact(DisplayName = "Case: 100 concurrent PUT and PATCH requests: 50 same keys, 50 distinct keys.")]
-    public async Task Concurrent100Requests_50SameKeys_50DistinctKeys()
-    {
-        // Create a single shared key for 50 same-key requests
-        var sharedKey = CreateKey();
-        using var initialPutResponse = await PutAsync(sharedKey, JsonValue.Create(0));
-        await AssertSuccessAsync(initialPutResponse);
-
-        // Create 50 distinct keys and initialize them
-        var distinctKeys = Enumerable.Range(0, 50).Select(_ => CreateKey()).ToList();
-        foreach (var key in distinctKeys)
-        {
-            using var putResponse = await PutAsync(key, JsonValue.Create(0));
-            await AssertSuccessAsync(putResponse);
-        }
-
-        // Merge: 50 same keys + 50 distinct keys = 100 keys total
-        var allKeys = Enumerable.Repeat(sharedKey, 50).Concat(distinctKeys).ToList();
-
-        var tasks = allKeys.Select((key, index) => Task.Run(async () =>
-        {
-            if (index % 3 == 0)
-            {
-                using var response = await PutAsync(key, JsonValue.Create(index));
-                return response.StatusCode;
-            }
-            else if (index % 3 == 1)
-            {
-                using var response = await PatchAsync(key, JsonValue.Create(index));
-                return response.StatusCode;
-            }
-            else
-            {
-                using var response = await GetAsync(key);
-                return response.StatusCode;
-            }
-        }));
-
-        var results = await Task.WhenAll(tasks);
-        Assert.All(results, statusCode => Assert.Equal(HttpStatusCode.OK, statusCode));
-    }
-
     #endregion
 
     private async Task IncrementCounterAsync(string key, int increments)

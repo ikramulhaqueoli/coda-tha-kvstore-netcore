@@ -6,7 +6,7 @@ metadata:
     app: kvstore-api
 spec:
   serviceName: kvstore-api-headless
-  replicas: 4
+  replicas: 3
   selector:
     matchLabels:
       app: kvstore-api
