@@ -1,60 +1,56 @@
-using System.Diagnostics;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace KvStore.Core.Application.Commands;
 
 public static class KeyValueOperationLogger
 {
-    private static long GetMillisecondTimestamp()
+    private static string GetActionMethod(Type? declaringType)
     {
-        var timestamp = Stopwatch.GetTimestamp();
-        var milliseconds = (timestamp * 1_000L) / Stopwatch.Frequency;
-        return milliseconds;
-    }
-
-    private static string GetActionName(string methodName)
-    {
-        var upperMethodName = methodName.ToUpperInvariant();
-        if (upperMethodName.Contains("PUT"))
+        var upperDeclaringTypeFullName = declaringType?.FullName?.ToUpperInvariant() ?? String.Empty;
+        if (upperDeclaringTypeFullName.Contains("PUT"))
         {
             return "PUT";
         }
-        if (upperMethodName.Contains("PATCH"))
+        if (upperDeclaringTypeFullName.Contains("PATCH"))
         {
             return "PATCH";
         }
-        if (upperMethodName.Contains("GET"))
+        if (upperDeclaringTypeFullName.Contains("GET"))
         {
             return "GET";
         }
 
-        return methodName;
+        return "UNKNOWN";
     }
 
-    public static void LogOperationRequested<T>(ILogger<T> logger, string methodName, string key)
+    public static void LogOperationRequested<T, TResult>(ILogger<T> logger, Func<CancellationToken, Task<TResult>> action, string key)
     {
         logger.LogInformation(
-            "Action {ActionName} on key {Key} requested at {RequestedAt}",
-            GetActionName(methodName),
+            "Action Hash {}: {Method} Request on key {Key} requested at Timestamp {RequestedAt}",
+            action.GetHashCode(),
+            GetActionMethod(action.Method.DeclaringType),
             key,
-            GetMillisecondTimestamp());
+            Stopwatch.GetTimestamp());
     }
 
-    public static void LogOperationStarting<T>(ILogger<T> logger, string methodName, string key)
+    public static void LogOperationStarting<T, TResult>(ILogger<T> logger, Func<CancellationToken, Task<TResult>> action, string key)
     {
         logger.LogInformation(
-            "Action {ActionName} on key {Key} starting at {ExecutionStart}",
-            GetActionName(methodName),
+            "Action Hash {}: {Method} Request on key {Key} starting at Timestamp {ExecutionStart}",
+            action.GetHashCode(),
+            GetActionMethod(action.Method.DeclaringType),
             key,
-            GetMillisecondTimestamp());
+            Stopwatch.GetTimestamp());
     }
 
-    public static void LogOperationCompleted<T>(ILogger<T> logger, string methodName, string key)
+    public static void LogOperationCompleted<T, TResult>(ILogger<T> logger, Func<CancellationToken, Task<TResult>> action, string key)
     {
         logger.LogInformation(
-            "Action {ActionName} on key {Key} completed at {CompletedAt}",
-            GetActionName(methodName),
+            "Action Hash {}: {Method} Request on key {Key} completed at Timestamp {CompletedAt}",
+            action.GetHashCode(),
+            GetActionMethod(action.Method.DeclaringType),
             key,
-            GetMillisecondTimestamp());
+            Stopwatch.GetTimestamp());
     }
 }
