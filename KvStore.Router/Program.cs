@@ -9,6 +9,7 @@ var configuration = builder.Configuration;
 var environment = builder.Environment;
 const string KubernetesNodeOverridesSection = "KvStoreApiNodes";
 
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
