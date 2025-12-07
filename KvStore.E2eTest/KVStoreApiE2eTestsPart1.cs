@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
@@ -111,7 +112,7 @@ public sealed class KVStoreApiE2eTestsPart1
     [Fact(DisplayName = "Case: 100 concurrent PUT requests with same key.")]
     public async Task Concurrent100Requests_SameKey()
     {
-        var key = Guid.NewGuid().ToString("N");
+        var key = CreateKey();
 
         var tasks = Enumerable.Range(0, 100)
             .Select(_ => Task.Run(async () =>
@@ -129,7 +130,7 @@ public sealed class KVStoreApiE2eTestsPart1
     public async Task Concurrent100Requests_DistinctKeys()
     {
         var keys = Enumerable.Range(0, 100)
-            .Select(_ => Guid.NewGuid().ToString("N"))
+            .Select(i => CreateKey(suffix: i.ToString()))
             .ToList();
 
         var tasks = keys.Select(key => Task.Run(async () =>
@@ -490,8 +491,8 @@ public sealed class KVStoreApiE2eTestsPart1
         return ifVersion.HasValue ? $"{path}?ifVersion={ifVersion.Value}" : path;
     }
 
-    private static string CreateKey([CallerMemberName] string? testName = null)
-        => $"e2e:{testName ?? "test"}:{Guid.NewGuid():N}";
+    private static string CreateKey(string? suffix = null)
+        => $"{Stopwatch.GetTimestamp()}{(suffix != null ? ":" + suffix : "")}";
 
     private static JsonNode ParseJson(string value)
         => JsonNode.Parse(value)!;
