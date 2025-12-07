@@ -15,7 +15,7 @@ public sealed class PerKeySemaphoreLockProvider(ILogger<PerKeySemaphoreLockProvi
         Func<CancellationToken, Task<TResult>> action,
         CancellationToken cancellationToken)
     {
-        KeyValueOperationLogger.LogOperationRequested(logger, nameof(action), key);
+        KeyValueOperationLogger.LogOperationRequested(logger, action.Method.Name, key);
 
         ObjectDisposedException.ThrowIf(_disposed, typeof(PerKeySemaphoreLockProvider));
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
@@ -25,12 +25,12 @@ public sealed class PerKeySemaphoreLockProvider(ILogger<PerKeySemaphoreLockProvi
         await semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            KeyValueOperationLogger.LogOperationStarting(logger, nameof(action), key);
+            KeyValueOperationLogger.LogOperationStarting(logger, action.Method.Name, key);
             return await action(cancellationToken).ConfigureAwait(false);
         }
         finally
         {
-            KeyValueOperationLogger.LogOperationCompleted(logger, nameof(action), key);
+            KeyValueOperationLogger.LogOperationCompleted(logger, action.Method.Name, key);
             semaphore.Release();
         }
     }
