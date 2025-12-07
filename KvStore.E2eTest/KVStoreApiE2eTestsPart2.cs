@@ -112,7 +112,7 @@ public sealed class KVStoreApiE2eTestsPart2
     [Fact(DisplayName = "Case: 10 concurrent mixed requests (GET, PUT, PATCH) with same key return 200.")]
     public async Task Mixed10ConcurrentRequests_SameKey_Returns200()
     {
-        var key = CreateKey();
+        var key = "test-key-same";
 
         var tasks = Enumerable.Range(0, 10)
             .Select(i => Task.Run(async () =>
@@ -139,9 +139,7 @@ public sealed class KVStoreApiE2eTestsPart2
     [Fact(DisplayName = "Case: 10 concurrent mixed requests (GET, PUT, PATCH) with distinct keys return 200.")]
     public async Task Mixed10ConcurrentRequests_DistinctKeys_Returns200()
     {
-        var keys = Enumerable.Range(0, 10)
-            .Select(i => CreateKey(suffix: i.ToString()))
-            .ToList();
+        var keys = new[] { "test-key-0", "test-key-1", "test-key-2", "test-key-3", "test-key-4", "test-key-5", "test-key-6", "test-key-7", "test-key-8", "test-key-9" };
 
         var tasks = Enumerable.Range(0, 10)
             .Select(i => Task.Run(async () =>
