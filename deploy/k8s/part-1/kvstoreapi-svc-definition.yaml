@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: kvstore-api-single
+  namespace: kv-part1
   labels:
     app: kvstore-api-single
 spec:
