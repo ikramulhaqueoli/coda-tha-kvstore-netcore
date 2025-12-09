@@ -25,7 +25,7 @@ public sealed class KvStoreNodesOptions
 
     public string Scheme { get; init; } = DefaultScheme;
 
-    public string Namespace { get; init; } = DefaultNamespace;
+    public string Namespace { get; set; } = DefaultNamespace;
 
     public string ClusterDomain { get; init; } = DefaultClusterDomain;
 
