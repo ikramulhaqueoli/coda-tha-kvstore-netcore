@@ -36,11 +36,6 @@ spec:
                 configMapKeyRef:
                   name: kvstore-router-config
                   key: KvStoreApiNodes__ReplicaCount
-            - name: KvStoreApiNodes__Namespace
-              valueFrom:
-                configMapKeyRef:
-                  name: kvstore-router-config
-                  key: KvStoreApiNodes__Namespace
           readinessProbe:
             httpGet:
               path: /health

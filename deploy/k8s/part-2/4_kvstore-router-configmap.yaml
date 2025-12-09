@@ -8,5 +8,3 @@ metadata:
 data:
   KvStoreApiNodes__Port: "7000"
   KvStoreApiNodes__ReplicaCount: "3"
-  KvStoreApiNodes__Namespace: "part2"
-
