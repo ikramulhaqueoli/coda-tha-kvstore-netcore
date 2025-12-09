@@ -14,6 +14,7 @@ namespace KvStore.Router.Controllers;
 public sealed class KeyValueController(
     IKeyValueForwardingService forwardingService,
     IKeyListingService listingService,
+    IHttpContextAccessor httpContextAccessor,
     ILogger<KeyValueController> logger) : ControllerBase
 {
     private static readonly JsonSerializerOptions NdjsonSerializerOptions = new()
@@ -33,7 +34,7 @@ public sealed class KeyValueController(
         }
         catch (NodeHttpException ex)
         {
-            return CreateNodeErrorResult(ex, false, new TimeSpan());
+            return CreateNodeErrorResult(ex, new TimeSpan());
         }
         catch (NodeUnavailableException ex)
         {
@@ -46,20 +47,19 @@ public sealed class KeyValueController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<KeyValueRecord>> GetAsync(
         string key,
-        CancellationToken cancellationToken,
-        [FromQuery] bool debug = false)
+        CancellationToken cancellationToken)
     {
         var stopwatch = Stopwatch.StartNew();
         try
         {
             var result = await forwardingService.GetAsync(key, cancellationToken);
             stopwatch.Stop();
-            return Ok(CreateResponse(result, debug));
+            return CreateResponse(result);
         }
         catch (NodeHttpException ex)
         {
             stopwatch.Stop();
-            return CreateNodeErrorResult(ex, debug, stopwatch.Elapsed);
+            return CreateNodeErrorResult(ex, stopwatch.Elapsed);
         }
         catch (NodeUnavailableException ex)
         {
@@ -76,20 +76,19 @@ public sealed class KeyValueController(
         string key,
         [FromBody] JsonNode? value,
         [FromQuery(Name = "ifVersion")] int? expectedVersion,
-        CancellationToken cancellationToken,
-        [FromQuery] bool debug = false)
+        CancellationToken cancellationToken)
     {
         var stopwatch = Stopwatch.StartNew();
         try
         {
             var result = await forwardingService.PutAsync(key, value, expectedVersion, cancellationToken);
             stopwatch.Stop();
-            return Ok(CreateResponse(result, debug));
+            return CreateResponse(result);
         }
         catch (NodeHttpException ex)
         {
             stopwatch.Stop();
-            return CreateNodeErrorResult(ex, debug, stopwatch.Elapsed);
+            return CreateNodeErrorResult(ex, stopwatch.Elapsed);
         }
         catch (NodeUnavailableException ex)
         {
@@ -106,20 +105,19 @@ public sealed class KeyValueController(
         string key,
         [FromBody] JsonNode? delta,
         [FromQuery(Name = "ifVersion")] int? expectedVersion,
-        CancellationToken cancellationToken,
-        [FromQuery] bool debug = false)
+        CancellationToken cancellationToken)
     {
         var stopwatch = Stopwatch.StartNew();
         try
         {
             var result = await forwardingService.PatchAsync(key, delta, expectedVersion, cancellationToken);
             stopwatch.Stop();
-            return Ok(CreateResponse(result, debug));
+            return CreateResponse(result);
         }
         catch (NodeHttpException ex)
         {
             stopwatch.Stop();
-            return CreateNodeErrorResult(ex, debug, stopwatch.Elapsed);
+            return CreateNodeErrorResult(ex, stopwatch.Elapsed);
         }
         catch (NodeUnavailableException ex)
         {
@@ -140,102 +138,53 @@ public sealed class KeyValueController(
         return builder.ToString();
     }
 
-    private ActionResult CreateNodeErrorResult(NodeHttpException exception, bool debug, TimeSpan executionTime)
+    private ActionResult CreateNodeErrorResult(NodeHttpException exception, TimeSpan executionTime)
     {
+        var requestHash = httpContextAccessor.HttpContext?.Request.GetHashCode() ?? 0;
+        
         logger.LogWarning(
-            "Node {NodeId} responded with status {StatusCode}",
+            "Request #{RequestHash}: Node {NodeId} responded with status {StatusCode}",
+            requestHash,
             exception.Node.Id,
             (int)exception.StatusCode);
 
-        if (!debug)
-        {
-            if (string.IsNullOrWhiteSpace(exception.ResponseBody))
-            {
-                return StatusCode((int)exception.StatusCode);
-            }
-
-            return new ContentResult
-            {
-                StatusCode = (int)exception.StatusCode,
-                ContentType = "application/json",
-                Content = exception.ResponseBody
-            };
-        }
-
-        // When debug=true, include debug information in the response
-        var debugInfo = new
-        {
-            node = exception.Node.Id,
-            executionTimeMs = executionTime.TotalMilliseconds
-        };
+        // Always add debug information to response headers
+        Response.Headers["X-Debug-RequestHash"] = requestHash.ToString();
+        Response.Headers["X-Debug-Node"] = exception.Node.Id;
+        Response.Headers["X-Debug-ExecutionTimeMs"] = executionTime.TotalMilliseconds.ToString("F2");
 
         if (string.IsNullOrWhiteSpace(exception.ResponseBody))
         {
-            return new JsonResult(debugInfo)
-            {
-                StatusCode = (int)exception.StatusCode
-            };
+            return StatusCode((int)exception.StatusCode);
         }
 
-        // Try to parse the response body and merge with debug info
-        try
+        return new ContentResult
         {
-            var responseJson = JsonNode.Parse(exception.ResponseBody);
-            if (responseJson is JsonObject responseObj)
-            {
-                responseObj["debug"] = JsonNode.Parse(JsonSerializer.Serialize(debugInfo))!;
-                return new ContentResult
-                {
-                    StatusCode = (int)exception.StatusCode,
-                    ContentType = "application/json",
-                    Content = responseObj.ToJsonString()
-                };
-            }
-        }
-        catch
-        {
-            // If parsing fails, return both as separate fields
-        }
-
-        // Fallback: return debug info with original response body
-        var combinedResponse = new
-        {
-            error = exception.ResponseBody,
-            debug = debugInfo
-        };
-
-        return new JsonResult(combinedResponse)
-        {
-            StatusCode = (int)exception.StatusCode
+            StatusCode = (int)exception.StatusCode,
+            ContentType = "application/json",
+            Content = exception.ResponseBody
         };
     }
 
     private ActionResult CreateNodeUnavailableResult(NodeUnavailableException exception)
     {
-        logger.LogError(exception, "Node {NodeId} is unavailable.", exception.Node.Id);
+        var requestHash = httpContextAccessor.HttpContext?.Request.GetHashCode() ?? 0;
+        
+        logger.LogError(exception, "Request #{RequestHash}: Node {NodeId} is unavailable.", requestHash, exception.Node.Id);
         return StatusCode(
             StatusCodes.Status503ServiceUnavailable,
             new { error = $"Node '{exception.Node.Id}' is unavailable." });
     }
 
-    private static object CreateResponse(ForwardedKeyValueResult result, bool debug)
+    private ActionResult<KeyValueRecord> CreateResponse(ForwardedKeyValueResult result)
     {
-        if (!debug)
-        {
-            return result.Record;
-        }
+        var requestHash = httpContextAccessor.HttpContext?.Request.GetHashCode() ?? 0;
+        
+        Response.Headers["X-Debug-RequestHash"] = requestHash.ToString();
+        Response.Headers["X-Debug-Node"] = result.NodeId;
+        Response.Headers["X-Debug-ExecutionTimeMs"] = result.ExecutionTime.TotalMilliseconds.ToString("F2");
 
-        return new
-        {
-            result.Record.Key,
-            result.Record.Value,
-            result.Record.Version,
-            debug = new
-            {
-                node = result.NodeId,
-                executionTimeMs = result.ExecutionTime.TotalMilliseconds
-            }
-        };
+        return Ok(result.Record);
     }
 }
 
