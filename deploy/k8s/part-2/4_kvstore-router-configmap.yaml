@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kvstore-router-config
+  namespace: part2
+  labels:
+    app: kvstore-router
+data:
+  KvStoreApiNodes__Port: "7000"
+  KvStoreApiNodes__ReplicaCount: "3"
+  KvStoreApiNodes__Namespace: "part2"
+
