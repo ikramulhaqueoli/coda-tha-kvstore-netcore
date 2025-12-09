@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: kvstore-api-single
-  namespace: kv-part1
+  namespace: part1
   labels:
     app: kvstore-api-single
 spec:

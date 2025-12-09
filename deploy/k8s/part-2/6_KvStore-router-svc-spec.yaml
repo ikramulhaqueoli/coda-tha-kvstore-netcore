@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: kvstore-router
-  namespace: kv-part2
+  namespace: part2
   labels:
     app: kvstore-router
 spec:

@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: kvstore-api
-  namespace: kv-part2
+  namespace: part2
   labels:
     app: kvstore-api
 spec:
