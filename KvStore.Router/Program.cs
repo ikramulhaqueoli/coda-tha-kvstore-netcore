@@ -37,11 +37,6 @@ builder.Services.PostConfigure<KvStoreNodesOptions>(options =>
     {
         options.ReplicaCount = replicaCount;
     }
-
-    if (kubernetesOverrides.GetValue<string>("Namespace") is { } namespaceValue)
-    {
-        options.Namespace = namespaceValue;
-    }
 });
 builder.Services.AddSingleton<INodeRegistry, NodeRegistry>();
 builder.Services.AddSingleton<IKeyPartitioner, ConsistentHashPartitioner>();
