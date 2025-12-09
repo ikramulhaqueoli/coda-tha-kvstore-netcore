@@ -19,6 +19,7 @@ public sealed class KeyValueForwardingService(
         var stopwatch = Stopwatch.StartNew();
         var record = await nodeClient.GetAsync(node, key, cancellationToken);
         stopwatch.Stop();
+        LogRequestCompletion("GET", key, node.Id, stopwatch.ElapsedMilliseconds);
         return new ForwardedKeyValueResult(record, node.Id, stopwatch.Elapsed);
     }
 
@@ -33,6 +34,7 @@ public sealed class KeyValueForwardingService(
         var stopwatch = Stopwatch.StartNew();
         var record = await nodeClient.PutAsync(node, key, payload, expectedVersion, cancellationToken);
         stopwatch.Stop();
+        LogRequestCompletion("PUT", key, node.Id, stopwatch.ElapsedMilliseconds);
         return new ForwardedKeyValueResult(record, node.Id, stopwatch.Elapsed);
     }
 
@@ -47,19 +49,33 @@ public sealed class KeyValueForwardingService(
         var stopwatch = Stopwatch.StartNew();
         var record = await nodeClient.PatchAsync(node, key, payload, expectedVersion, cancellationToken);
         stopwatch.Stop();
+        LogRequestCompletion("PATCH", key, node.Id, stopwatch.ElapsedMilliseconds);
+
         return new ForwardedKeyValueResult(record, node.Id, stopwatch.Elapsed);
     }
 
     private void LogNodeSelection(string method, string key, string nodeId)
     {
         var requestHash = httpContextAccessor.HttpContext?.Request.GetHashCode() ?? 0;
-        var timestamp = Stopwatch.GetTimestamp();
+        
         logger.LogInformation(
-            "Request #{RequestHash}: {Method} key {Key} requested at Timestamp {Timestamp}; Node Selected: {NodeId}",
+            "Request #{RequestHash}: {Method} key {Key} request being forwarded to Node: {NodeId}",
             requestHash,
             method,
             key,
-            timestamp,
+            nodeId);
+    }
+
+    private void LogRequestCompletion(string method, string key, string nodeId, long executionTimeMs)
+    {
+        var requestHash = httpContextAccessor.HttpContext?.Request.GetHashCode() ?? 0;
+
+        logger.LogInformation(
+            "Request #{RequestHash}: {Method} key {Key} completed in {ExecutionTimeMs} ms by Node: {NodeId}",
+            requestHash,
+            method,
+            key,
+            executionTimeMs,
             nodeId);
     }
 }
